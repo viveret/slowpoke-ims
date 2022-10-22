@@ -1,0 +1,9 @@
+@using slowpoke.core.Models
+@model IndexViewModel
+@{
+    ViewData["Title"] = "Favorites";
+    var r = (QueryDocumentsResult) Model;
+}
+@section Scripts {
+}
+@Html.DisplayFor(m => r)

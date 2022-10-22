@@ -1,0 +1,79 @@
+@using System.Threading
+@using slowpoke.core.Models.Identity
+@using slowpoke.core.Services.Identity
+@inject IIdentityAuthenticationService IdentityAuthenticationService
+@model ISlowPokeIdentity
+@{
+    var isSelf = IdentityAuthenticationService.CurrentIdentity.AuthGuid == Model.AuthGuid;
+    var trustLevel = IdentityAuthenticationService.GetTrustLevel(Model, CancellationToken.None);
+    var isTrusted = isSelf || trustLevel == TrustLevel.Trusted;
+    var isUntrusted = isSelf || trustLevel == TrustLevel.KnownButUntrusted;
+    var isUnknown = isSelf || trustLevel == TrustLevel.Unknown;
+}
+<div class="d-flex">
+    @if (isSelf)
+    {
+        <h2 class="flex--item">Localhost (self)</h2>
+    }
+    else
+    {
+        <h2 class="flex--item">@Model.AuthGuid</h2>
+    }
+    <div class="flex--item fl-grow1 d-flex fd-row-reverse">
+        @if (isTrusted)
+        {
+            <form><button class="s-btn s-btn__muted" type="button" disabled>Trust</button></form>
+        }
+        else
+        {
+            @using (Html.BeginForm(nameof(SystemController.IdentityAuthenticationTrust), "System", new { id = Model.AuthGuid }))
+            {
+                <button class="s-btn" type="submit">Trust</button>
+            }
+        }
+        @if (isUntrusted)
+        {
+            <form><button class="s-btn s-btn__muted" type="button" disabled>Untrust</button></form>
+        }
+        else
+        {
+            @using (Html.BeginForm(nameof(SystemController.IdentityAuthenticationUntrustKnown), "System", new { id = Model.AuthGuid }))
+            {
+                <button class="s-btn" type="submit">Untrust (remember)</button>
+            }
+        }
+        @if (isUnknown)
+        {
+            <form><button class="s-btn s-btn__muted" type="button" disabled>Forget</button></form>
+        }
+        else
+        {
+            @using (Html.BeginForm(nameof(SystemController.IdentityAuthenticationForget), "System", new { id = Model.AuthGuid }))
+            {
+                <button class="s-btn" type="submit">Forget</button>
+            }
+        }
+    </div>
+</div>
+<ul class="break-word">
+    <li><b>@Html.DisplayNameFor(m => m.IdentityGuid)</b> @Html.DisplayFor(m => m.IdentityGuid)</li>
+    <li><b>@Html.DisplayNameFor(m => m.AuthGuid)</b> @Html.DisplayFor(m => m.AuthGuid)</li>
+    <li><b>@Html.DisplayNameFor(m => m.AuthAlg)</b> @Html.DisplayFor(m => m.AuthAlg)</li>
+    <li><b>@Html.DisplayNameFor(m => m.AuthKeyString)</b> @Html.DisplayFor(m => m.AuthKeyString)</li>
+    @if (Model.AuthAlg == "X.509")
+    {
+        var x509 = Model.ConvertToX509Cert();
+        <li><b>Subject:</b> @x509.Subject</li>
+        <li><b>Issuer:</b> @x509.Issuer</li>
+        <li><b>Version:</b> @x509.Version</li>
+        <li><b>Valid Date:</b> @x509.NotBefore</li>
+        <li><b>Expiry Date:</b> @x509.NotAfter</li>
+        <li><b>Thumbprint:</b> @x509.Thumbprint</li>
+        <li><b>Serial Number:</b> @x509.SerialNumber</li>
+        <li><b>Friendly Name:</b> @x509.PublicKey.Oid.FriendlyName</li>
+        <li><b>Public Key Format:</b> @x509.PublicKey.EncodedKeyValue.Format(true)</li>
+        <li><b>Raw Data Length:</b> @x509.RawData.Length</li>
+        <li><b>Certificate to string:</b> @x509.ToString(true)</li>
+        <li><b>Certificate to XML String:</b> @x509.PublicKey.Key.ToXmlString(false)</li>
+    }
+</ul>

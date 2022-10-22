@@ -1,0 +1,6 @@
+@using slowpoke.core.Models.Node
+@model SlowPokeHostModel
+@{
+    var asId = (ISlowPokeId)Model;
+}
+Host Id: @Html.DisplayFor(m => asId)

@@ -1,0 +1,4 @@
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+<div>Total size (with sub files/folders): @string.Format("{0:n0}", Model.Folder.SizeBytes) bytes</div>
+<div>Number of sub files: @string.Format("{0:n0}", Model.Folder.SizeFiles) files</div>
+<div>Number of sub folders: @string.Format("{0:n0}", Model.Folder.SizeFolders) folders</div>

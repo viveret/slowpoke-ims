@@ -1,0 +1,109 @@
+@using System.Reflection
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Mvc.Controllers
+@using SlowPokeIMS.Web.Controllers.Attributes
+@inject IAssemblyAccessor assemblyAccessor
+@{
+    var isHorizontal = ViewData["isHorizontal"] == "true";
+    var controllerActionDescriptor = Context
+        .GetEndpoint()
+        .Metadata
+        .GetMetadata<ControllerActionDescriptor>();
+    var currentControllerName = controllerActionDescriptor.ControllerName;
+    var currentActionName = controllerActionDescriptor.ActionName;
+    var isNullSelected = currentActionName == null || currentControllerName == null;
+    var assembly = assemblyAccessor.Value;
+    var controllerTypes = assembly
+                .GetTypes().Where(t => t.IsSubclassOf(typeof(Controller))).ToList();
+}
+@foreach (var controllerType in controllerTypes)
+{
+    var controllerDisplayAttr = controllerType.GetCustomAttribute<ShowInNavBarAttribute>(true);
+    var suffixLength = "Controller".Length;
+    var controllerName = controllerType.Name.Substring(0, controllerType.Name.Length - suffixLength);
+
+    var actions = controllerType.GetMethods()
+        .Where(m => m.GetCustomAttribute<ShowInNavBarAttribute>(true) != null);
+
+    if (controllerDisplayAttr != null)
+    {
+        var countOfActionsInOrientation = 0;
+        foreach (var action in actions)
+        {
+            var displayAttr = action.GetCustomAttribute<ShowInNavBarAttribute>(true);
+            if ((!isHorizontal && displayAttr.ShowInHorizontal) ||
+                (isHorizontal && !displayAttr.ShowInHorizontal))
+            {
+                continue;
+            }
+            countOfActionsInOrientation++;
+        }
+
+        if (countOfActionsInOrientation == 0 && actions.Count() > 0)
+        {
+            continue;
+        }
+
+        if (countOfActionsInOrientation == 0 && (
+            (!isHorizontal && controllerDisplayAttr.ShowInHorizontal) ||
+            (isHorizontal && !controllerDisplayAttr.ShowInHorizontal)))
+        {
+            continue;
+        }
+
+        var name = controllerDisplayAttr.Title ?? controllerName;
+        var isSelected = currentControllerName == controllerName;
+        var isSelectedClass = isSelected ? "is-selected" : "";
+
+        if (isHorizontal)
+        {
+            @:<li title="@controllerDisplayAttr.Tooltip">
+            <a class="s-navigation--item @isSelectedClass s-navigation--item__dropdown" aria-controls="popover-@isHorizontal-@controllerName" data-controller="s-popover" data-action="s-popover#toggle">@name</a>
+            @:<div class="s-popover" id="popover-@isHorizontal-@controllerName" role="menu">
+            <div class="s-popover--arrow"></div>
+            @:<ul class="list-reset">
+        }
+        else
+        {
+            <li title="@controllerDisplayAttr.Tooltip" class="s-navigation--title">@name</li>
+        }
+    }
+
+    @if (controllerDisplayAttr?.UseCustomView ?? false)
+    {
+        <partial name="controllerDisplayAttr.CustomViewName" />
+    }
+    else
+    {
+        @foreach (var action in actions)
+        {
+            var displayAttr = action.GetCustomAttribute<ShowInNavBarAttribute>(true);
+            if ((!isHorizontal && displayAttr.ShowInHorizontal) ||
+                (isHorizontal && !displayAttr.ShowInHorizontal))
+            {
+                continue;
+            }
+            var name = displayAttr.Title ?? action.Name;
+            var isNullRoute = action.Name == "Index" && controllerName == "Home";
+            var isSelected = (isNullRoute && isNullSelected) || (currentActionName == action.Name && currentControllerName == controllerName);
+            var isSelectedClass = isSelected ? "is-selected" : "";
+    
+            if (isSelected && (!ViewData.ContainsKey("Title") || (ViewData["Title"] is string currentTitle && string.IsNullOrWhiteSpace(currentTitle))))
+            {
+                ViewData["Title"] = @name;
+            }
+
+            <li><a class="s-navigation--item @isSelectedClass" asp-action="@action.Name" asp-controller="@controllerName" title="@displayAttr.Tooltip">@name</a></li>
+        }
+    }
+    
+    if (controllerDisplayAttr != null)
+    {
+        if (isHorizontal)
+        {
+            @:</ul>
+            @:</div>
+            @:</li>
+        }
+    }
+}

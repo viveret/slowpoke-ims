@@ -1,0 +1,39 @@
+@model ScheduledTasksViewModel
+@{
+    ViewData["Title"] = $"{Model.Task.Title} - Scheduled Task Details";
+}
+<div class="flex--item pt96">
+    <h1 class="fs-title">@ViewData["Title"]</h1>
+    <p>Current context count (active number of running tasks): @Model.Contexts.Count()<p>
+    <ul>
+        @foreach (var task in Model.Contexts)
+        {
+            <li><a asp-route-id="@task.Id" asp-action="ScheduledTaskContextDetails" asp-controller="System">@task.Id</a></li>
+        }
+    </ul>
+
+    @if (Model.Task.CanRunManually)
+    {
+        if (Model.IsCurrentlyRunning)
+        {
+            if (Model.Task.CanRunConcurrently)
+            {
+                <partial name="_ScheduledTaskRunButton" model="@Model.RunUrl" />
+                <partial name="_ScheduledTaskQueueButton" model="@Model.QueueUrl" />
+            }
+            else
+            {
+                <p>Cannot run this task when it is already running</p>
+            }
+        }
+        else 
+        {
+            <partial name="_ScheduledTaskRunButton" model="@Model.RunUrl" />
+            <partial name="_ScheduledTaskQueueButton" model="@Model.QueueUrl" />
+        }
+    }
+    else
+    {
+        <p>Cannot run this task manually</p>
+    }
+</div>

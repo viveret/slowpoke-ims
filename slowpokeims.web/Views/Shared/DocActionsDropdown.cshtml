@@ -1,0 +1,17 @@
+@inject IServiceProvider services
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+@{
+    var actions = Model.Model.GetActions(Url, services);
+    if (actions.Items.Count > 0)
+    {
+        var hash = Model.Model.Path.GetHashCode();
+        <div class="grid--item">
+            <div class="ta-right">
+                <button class="s-btn s-btn__dropdown" type="button" role="button" aria-controls="popover-actions-@hash" data-controller="s-popover" data-action="s-popover#toggle" aria-expanded="false"></button>
+            </div>
+            <div id="popover-actions-@hash" class="s-popover" role="menu">
+                @Html.DisplayFor(m => actions)
+            </div>
+        </div>
+    }
+}

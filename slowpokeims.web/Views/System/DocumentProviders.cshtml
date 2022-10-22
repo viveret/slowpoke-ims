@@ -1,0 +1,15 @@
+@model DocumentProvidersViewModel
+<h1>@ViewData["Title"]</h1>
+<div class="d-grid">
+    <h2>Read Only</h2>
+    @foreach (var item in Model.ReadOnly)
+    {
+        @Html.DisplayFor(m => item)
+    }
+
+    <h2>Read and Write</h2>
+    @foreach (var item in Model.ReadOnly)
+    {
+        @Html.DisplayFor(m => item)
+    }
+</div>

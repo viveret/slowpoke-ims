@@ -1,0 +1,37 @@
+@inject slowpoke.core.Services.Broadcast.IBroadcastProviderResolver broadcast
+@{
+    var msgsSent = broadcast.MemCached.ReadPersistedSentMessages().ToList();
+    var msgsReceived = broadcast.MemCached.ReadPersistedReceivedMessages().ToList();
+    int i = 0, j = 0;
+}
+<h1>@ViewData["Title"]</h1>
+<div class="d-grid g32 pt96">
+    <div class="grid--item">
+        <h2>Sent Messages (@msgsSent.Count)</h2>
+        <div class="d-grid g16">
+            @foreach (var msg in msgsSent)
+            {
+                i++;
+                var m = new DebugObjectViewModel { Value = msg };
+                <div class="grid--item s-card">
+                    <span>#@i</span>
+                    <partial name="DebugObject" model="@m" />
+                </div>
+            }
+        </div>
+    </div>
+    <div class="grid--item">
+        <h2>Received Messages (@msgsReceived.Count)</h2>
+        <div class="d-grid g16">
+            @foreach (var msg in msgsReceived)
+            {
+                j++;
+                var m = new DebugObjectViewModel { Value = msg };
+                <div class="grid--item s-card">
+                    <span>#@j</span>
+                    <partial name="DebugObject" model="@m" />
+                </div>
+            }
+        </div>
+    </div>
+</div>

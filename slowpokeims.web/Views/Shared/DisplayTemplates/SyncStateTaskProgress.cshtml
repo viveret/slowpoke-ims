@@ -1,0 +1,8 @@
+@using slowpoke.core.Models.SyncState
+@model SyncStateTaskProgress
+@{
+    var percent = 100.0 * Model.ProgressValue / Model.ProgressMax;
+}
+<div class="s-progress">
+    <div class="s-progress--bar" role="progressbar" aria-valuemin="0" aria-valuemax="@Model.ProgressMax" aria-valuenow="@Model.ProgressValue" aria-label="current progress" style="width: @percent%"></div>
+</div>

@@ -1,0 +1,20 @@
+@model IndexViewModel
+<div class="flex--item pt96">
+    <div class="s-card">
+        <h2 class="fs-body3">System Info</h2>
+            <ul>
+                <li><b>@Html.DisplayNameFor(m => m.MachineName):</b> @Model.MachineName</li>
+                <li><b>@Html.DisplayNameFor(m => m.ProcessName):</b> @Model.ProcessName</li>
+                <li><b>@Html.DisplayNameFor(m => m.StartTime):</b> @Model.StartTime</li>
+                <li><b>@Html.DisplayNameFor(m => m.ThreadCount):</b> @Model.ThreadCount</li>
+                <li><b>@Html.DisplayNameFor(m => m.PagedMemorySize64):</b> @string.Format("{0:n0}", Model.PagedMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.PagedSystemMemorySize64):</b> @string.Format("{0:n0}", Model.PagedSystemMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.NonpagedSystemMemorySize64):</b> @string.Format("{0:n0}", Model.NonpagedSystemMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.PeakPagedMemorySize64):</b> @string.Format("{0:n0}", Model.PeakPagedMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.PeakVirtualMemorySize64):</b> @string.Format("{0:n0}", Model.PeakVirtualMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.PeakWorkingSet64):</b> @string.Format("{0:n0}", Model.PeakWorkingSet64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.PrivateMemorySize64):</b> @string.Format("{0:n0}", Model.PrivateMemorySize64) bytes</li>
+                <li><b>@Html.DisplayNameFor(m => m.WorkingSet64):</b> @string.Format("{0:n0}", Model.WorkingSet64) bytes</li>
+            </ul>
+    </div>
+</div>

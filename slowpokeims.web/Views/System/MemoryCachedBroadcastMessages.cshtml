@@ -1,0 +1,33 @@
+@inject slowpoke.core.Services.Broadcast.IBroadcastProviderResolver broadcast
+@{
+}
+<h1>@ViewData["Title"]</h1>
+<div class="d-grid pt96">
+    <div class="grid--item">
+        <h2>Unsent Messages (@broadcast.MemCached.UnsentMessages.Count())</h2>
+        @foreach (var msg in broadcast.MemCached.UnsentMessages)
+        {
+            <div class="s-card">
+                @Html.DisplayFor(m => msg)
+            </div>
+        }
+    </div>
+    <div class="grid--item">
+        <h2>Sent Messages (@broadcast.MemCached.SentMessages.Count())</h2>
+        @foreach (var msg in broadcast.MemCached.SentMessages)
+        {
+            <div class="s-card">
+                @Html.DisplayFor(m => msg)
+            </div>
+        }
+    </div>
+    <div class="grid--item">
+        <h2>Received Messages (@broadcast.MemCached.ReceivedMessages.Count())</h2>
+        @foreach (var msg in broadcast.MemCached.ReceivedMessages)
+        {
+            <div class="s-card">
+                @Html.DisplayFor(m => msg)
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,18 @@
+@model slowpoke.core.Models.IPaginatedEnumerable
+@{
+    var lasti = Model.Offset + 1;
+}
+<div class="d-grid fd-column g32">
+    <div class="grid--item">Total: @string.Format("{0:n0}", Model.Total)</div>
+    <partial name="Pagination" />
+    @foreach (var item in Model.Items)
+    {
+        var i = lasti;
+        <div class="grid--item">
+            <span>#@string.Format("{0:n0}", i)</span>
+            <partial name="PaginatedEnumerableListItem_@item.GetType().Name" model="@item"/>
+        </div>
+        lasti++;
+    }
+    <partial name="Pagination" />
+</div>

@@ -1,0 +1,92 @@
+@inject IServiceProvider services
+@model slowpoke.core.Models.Node.Docs.IReadOnlyDocument
+@{
+    var meta = Model.Meta;
+    string allText = null;
+    bool isPDF = false;
+    bool isImage = false;
+    if (!string.IsNullOrWhiteSpace(meta.ContentType))
+    {
+        switch (meta.ContentType)
+        {
+            case "application/pdf":
+            isPDF = true;
+            break;
+            case "text":
+            allText = Model.ReadAllText(Encoding.Unicode, numLines: 5);
+            break;
+            default:
+            if (meta.ContentType.StartsWith("text/"))
+            {
+                allText = Model.ReadAllText(Encoding.Unicode, numLines: 5);
+            }
+            else if (meta.ContentType.StartsWith("image/"))
+            {
+                isImage = true;
+            }
+            break;
+        }
+    }
+    var title = meta.Title;
+    var classSize = (ViewData["classSize"] as string) ?? "";
+    var badgeClass = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+}
+<div class="s-card">
+    <div class="d-grid grid__12 g8">
+        <div class="grid--item grid--col11">
+            <a class="fw-bold" href="@Url.Action("Details", "Home", new { path = @Model.Path.PathValue })">
+                @if (string.IsNullOrWhiteSpace(title))
+                {
+                    <h4 class="fs-body2">@Model.Path</h4>
+                }
+                else
+                {
+                    <h4 class="fs-body2">@title</h4>
+                    <div class="fs-body1">@Model.Path</div>
+                }
+            </a>
+            <div>Size: @string.Format("{0:n0}", Model.SizeBytes) bytes</div>
+        </div>
+        <div class="grid--item">
+            <div class="ta-right">
+                <button class="s-btn s-btn__dropdown" type="button" role="button" aria-controls="popover-actions" data-controller="s-popover" data-action="s-popover#toggle" aria-expanded="false"></button>
+            </div>
+            <div id="popover-actions" class="s-popover" role="menu">
+                @{ var actions = Model.GetActions(Url, services); }
+                @Html.DisplayFor(m => actions)
+            </div>
+        </div>
+        <div class="grid--item grid--col12 s-card">
+            @if (string.IsNullOrWhiteSpace(allText))
+            {
+                var urlRaw = @Url.Action("Raw", "Home", new { path = Model.Path.PathValue });
+                if (isPDF)
+                {
+                    <embed src="@urlRaw" class="w100" />
+                }
+                else if (isImage)
+                {
+                    <img src="@urlRaw" class="w50" />
+                }
+                else
+                {
+                    <span class="fs-italic">unknown content type or extension</span>
+                }
+            }
+            else
+            {
+                <span class="ws-pre-line">@allText</span>
+            }
+        </div>
+        <div class="grid--item grid--col12 d-flex fw-wrap g4">
+            @if (meta == null)
+            {
+                <span class="@badgeClass s-badge__danger">Does not have meta file</span>
+            }
+            else
+            {
+                @Html.DisplayFor(m => meta)
+            }
+        </div>
+    </div>
+</div>

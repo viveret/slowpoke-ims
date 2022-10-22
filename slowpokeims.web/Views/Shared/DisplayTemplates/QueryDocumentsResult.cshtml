@@ -1,0 +1,37 @@
+@using slowpoke.core.Models
+@model QueryDocumentsResult
+@{
+    var itemViewOptions = Enum.GetValues<ItemViewType>().Select(v => new SelectListItem { Value = v.ToString(), Text = v.ToString() });
+    var itemView = Model.q.ItemView ?? ItemViewType.Default;
+}
+<div class="pt96">
+    @Html.DisplayFor(m => m.q)
+    <div class="d-grid grid__6 g8 ai-center pt8">
+        <div class="grid--item grid--col4">
+            <partial name="Pagination" model="Model.Documents" />
+        </div>
+        <div class="grid--item grid--col2">
+            <div class="d-flex ai-center">
+                <div class="flex--item fl-grow1 ta-right pr8">Total: @string.Format("{0:n0}", Model.Documents.Total)</div>
+                <div class="flex--item">
+                    <a class="s-btn s-btn__outlined s-btn__dropdown" aria-controls="popover-viewtype" data-controller="s-popover" data-action="s-popover#toggle">@Html.DisplayNameFor(m => m.q.ItemView): @(Model.q.ItemView ?? ItemViewType.Default)</a>
+                    <div class="s-popover" id="popover-viewtype" role="menu">
+                        <div class="s-popover--arrow"></div>
+                        <ul class="s-navigation s-navigation__vertical fw-nowrap">
+                            @foreach (var v in Enum.GetValues<ItemViewType>())
+                            {
+                                var isSelected = (v == ItemViewType.Default && !Model.q.ItemView.HasValue) ||
+                                                 Model.q.ItemView == v;
+                                var isSelectedClass = isSelected ? "is-selected" : "";
+                                <li><a class="s-navigation--item @isSelectedClass" href="@Model.Documents.ItemViewTypeToUrl?.Invoke(v)">@v</a></li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <partial name="Paginated/@itemView" model="Model.Documents" />
+    <partial name="Pagination" model="Model.Documents" />
+</div>

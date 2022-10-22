@@ -1,0 +1,19 @@
+@model SlowPokeIMS.Web.ViewModels.IPaginatedEnumerableViewModel
+@{
+    var lasti = Model.Offset + 1;
+    ViewData["classSize"] = "__sm";
+}
+<div class="d-grid grid__5 g16">
+    @foreach (var item in Model.Items)
+    {
+        var i = lasti;
+        <div class="grid--item">
+            <span>#@string.Format("{0:n0}", i)</span>
+            <partial name="Paginated/SmallItemGrid_Item_@item.GetType().Name" model="@item"/>
+        </div>
+        lasti++;
+    }
+</div>
+@{
+    ViewData.Remove("classSize");
+}

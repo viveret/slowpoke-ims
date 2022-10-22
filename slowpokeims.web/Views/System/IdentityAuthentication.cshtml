@@ -1,0 +1,30 @@
+@inject slowpoke.core.Services.Identity.IIdentityAuthenticationService identityAuth
+@{
+}
+<h1>@ViewData["Title"]</h1>
+<div class="d-grid pt96">
+    <div class="grid--item">
+        <h2>Current Identity</h2>
+        <div class="s-card">
+            @Html.DisplayFor(m => identityAuth.CurrentIdentity)
+        </div>
+    </div>
+    <div class="grid--item">
+        <h2>Trusted Identities (@identityAuth.TrustedIdentities.Count())</h2>
+        @foreach (var identity in identityAuth.TrustedIdentities)
+        {
+            <div class="s-card">
+                @Html.DisplayFor(m => identity)
+            </div>
+        }
+    </div>
+    <div class="grid--item">
+        <h2>Untrusted Known Identities (@identityAuth.UntrustedIdentities.Count())</h2>
+        @foreach (var identity in identityAuth.UntrustedIdentities)
+        {
+            <div class="s-card">
+                @Html.DisplayFor(m => identity)
+            </div>
+        }
+    </div>
+</div>

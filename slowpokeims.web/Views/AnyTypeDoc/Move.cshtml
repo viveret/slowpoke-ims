@@ -1,0 +1,26 @@
+@model MoveViewModel
+@{
+    ViewData["Title"] = "Move Document";
+}
+<div class="pt96">
+    <h1>@ViewData["Title"]</h1>
+    <p class="fc-red-400">@Html.ValidationSummary()</p>
+    @using (Html.BeginForm())
+    {
+        <div class="d-grid grid__12 g8 ai-center">
+            <div class="grid--item grid--col9">Source: @Model.path @Html.HiddenFor(m => m.path)</div>
+            <div class="grid--item grid--col2">
+                @if (!string.IsNullOrEmpty(Model.CancelUrl))
+                {
+                    <a class="s-btn s-btn__muted s-btn__filled w100" href="@Model.CancelUrl">Cancel / go back</a>
+                }
+            </div>
+            <div class="grid--item">
+                <button class="s-btn s-btn__primary w100" type="submit">Submit</button>
+            </div>
+            @Html.LabelFor(m => m.Destination, new { @class = "grid--item s-label ta-right" })
+            @Html.TextBoxFor(m => m.Destination, new { @class = "grid--item grid--col11 s-input w100" })
+            <p class="grid--item grid--col12">@Html.ValidationMessageFor(m => m.Destination)</p>
+        </div>
+    }
+</div>

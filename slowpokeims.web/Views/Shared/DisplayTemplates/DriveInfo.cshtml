@@ -1,0 +1,19 @@
+@model System.IO.DriveInfo
+@try
+{
+<ul>
+    <li><b>@Html.DisplayNameFor(m => m.AvailableFreeSpace)</b> @Html.DisplayFor(m => m.AvailableFreeSpace)</li>
+    <li><b>@Html.DisplayNameFor(m => m.DriveFormat)</b> @Html.DisplayFor(m => m.DriveFormat)</li>
+    <li><b>@Html.DisplayNameFor(m => m.DriveType)</b> @Html.DisplayFor(m => m.DriveType)</li>
+    <li><b>@Html.DisplayNameFor(m => m.IsReady)</b> @Html.DisplayFor(m => m.IsReady)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Name)</b> @Html.DisplayFor(m => m.Name)</li>
+    <li><b>@Html.DisplayNameFor(m => m.RootDirectory)</b> @Html.DisplayFor(m => m.RootDirectory)</li>
+    <li><b>@Html.DisplayNameFor(m => m.TotalFreeSpace)</b> @Html.DisplayFor(m => m.TotalFreeSpace)</li>
+    <li><b>@Html.DisplayNameFor(m => m.TotalSize)</b> @Html.DisplayFor(m => m.TotalSize)</li>
+    <li><b>@Html.DisplayNameFor(m => m.VolumeLabel)</b> @Html.DisplayFor(m => m.VolumeLabel)</li>
+</ul>
+}
+catch (System.UnauthorizedAccessException e)
+{
+    <p>@Html.DisplayFor(m => e)</p>
+}

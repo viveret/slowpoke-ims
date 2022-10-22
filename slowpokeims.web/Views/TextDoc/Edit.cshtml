@@ -1,0 +1,23 @@
+@model NewTextNoteViewModel
+@section Scripts {
+    <script src="~/js/Start/NewTextNote.js"></script>
+}
+<div class="pt128">
+    <p class="fc-red-400">@Html.ValidationSummary()</p>
+    @using (Html.BeginForm())
+    {
+        @Html.HiddenFor(m => m.path)
+        <div class="d-grid grid__4 g8">
+            <div class="grid--item ta-right">
+                @Html.LabelFor(m => m.Value)
+                <p>@Html.ValidationMessageFor(m => m.Value)</p>
+            </div>
+            <div class="grid--item grid--col3">
+                @Html.TextAreaFor(m => m.Value, new { @class = "w100 hmn2" })
+            </div>
+            <div class="grid--item">
+                <button class="s-btn s-btn__primary w100" type="submit">Submit</button>
+            </div>
+        </div>
+    }
+</div>

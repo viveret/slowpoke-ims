@@ -1,0 +1,50 @@
+@using slowpoke.core.Models.SyncState
+@model SyncStateModel
+@{
+}
+<div aria-describedby="popover-sync-state-system"
+    aria-expanded="false"
+    data-controller="s-tooltip"
+    data-s-tooltip-placement="bottom-start"
+    data-s-tooltip-toggle-class="is-selected">
+    <span>Sync status: </span>
+    @switch (Model.State)
+    {
+        case SyncState.ErrorState: <span class="s-badge s-badge__danger">!</span> break;
+        case SyncState.OutOfDate: <span class="s-badge s-badge__warning">!</span> break;
+        case SyncState.UpToDate: <span class="s-badge s-badge__success">&#x2714;</span> break;
+        case SyncState.Synchronizing: <span class="s-badge s-badge__info">&#x27F3;</span> break;
+        case SyncState.Uninitialized:
+        case SyncState.Unknown: <span class="s-badge s-badge__muted">?</span> break;
+    }
+</div>
+<div class="s-popover s-popover__tooltip" id="popover-sync-state-system" role="menu">
+    @if (Model.Progress != null)
+    {
+        @Html.DisplayFor(m => m.Progress)
+    }
+
+    @switch (Model.State)
+    {
+        case SyncState.ErrorState: <p>Error: @if (Model.Error != null) { @Model.Error } else { <span>no error information</span> }</p> break;
+        case SyncState.Uninitialized: <p>System uninitialized (waiting for change information)</p> break;
+        case SyncState.OutOfDate: <p>System out of date, update available</p> break;
+        case SyncState.UpToDate: <p>System up to date</p> break;
+        case SyncState.Synchronizing: <p>System synchronizing changes</p> break;
+        case SyncState.Unknown: <p>System in unknown state</p> break;
+    }
+    <ul>
+        @if (!Model.HasSentPublishedChanges)
+        {
+            <li><b>@Html.DisplayNameFor(m => m.HasSentPublishedChanges)</b> @Html.DisplayFor(m => m.HasSentPublishedChanges)</li>
+        }
+        <li><b>@Html.DisplayNameFor(m => m.LastTimeSentPublishedChanges)</b> @Html.DisplayFor(m => m.LastTimeSentPublishedChanges)</li>
+        @if (!Model.IsUpToDateWithPolledChanges)
+        {
+            <li><b>@Html.DisplayNameFor(m => m.IsUpToDateWithPolledChanges)</b> @Html.DisplayFor(m => m.IsUpToDateWithPolledChanges)</li>
+        }
+        <li><b>@Html.DisplayNameFor(m => m.LastTimePolledForChanges)</b> @Html.DisplayFor(m => m.LastTimePolledForChanges)</li>
+        <li><b>@Html.DisplayNameFor(m => m.State)</b> @Html.DisplayFor(m => m.State)</li>
+        <li><b>@Html.DisplayNameFor(m => m.LastTimeStateChanged)</b> @Html.DisplayFor(m => m.LastTimeStateChanged)</li>
+    </ul>
+</div>

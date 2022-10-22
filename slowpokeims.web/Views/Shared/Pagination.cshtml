@@ -1,0 +1,59 @@
+@model SlowPokeIMS.Web.ViewModels.IPaginatedEnumerableViewModel
+@{
+    var currentPage = Model.Offset / Math.Max(Model.PageSize, 1) + 1;
+    int pageStart = 1;
+    int pageEnd = Model.Total / Math.Max(Model.PageSize, 1) + 1;
+    var maxPagesToShow = 10;
+}
+<div class="s-pagination">
+    @if (currentPage > 1)
+    {
+        <a class="s-pagination--item" href="@Model.PageToUrl?.Invoke(pageStart)">first</a>
+        <a class="s-pagination--item" href="@Model.PageToUrl?.Invoke(currentPage - 1)">previous</a>
+    }
+    else
+    {
+        <span class="s-pagination--item">first</span>
+        <span class="s-pagination--item">previous</span>
+    }
+    <span class="s-pagination--item s-pagination--item__clear">…</span>
+    @for (int i = 0; i < Math.Min(pageEnd > maxPagesToShow ? maxPagesToShow / 2 : maxPagesToShow, pageEnd); i++)
+    {
+        var pg = i + 1;
+        if (currentPage == pg)
+        {
+            <span class="s-pagination--item is-selected" aria-current="page">@string.Format("{0:n0}", pg)</span>
+        }
+        else
+        {
+            <a href="@Model.PageToUrl?.Invoke(pg)" class="s-pagination--item">@string.Format("{0:n0}", pg)</a>
+        }
+    }
+    <span class="s-pagination--item s-pagination--item__clear">…</span>
+    @if (pageEnd > maxPagesToShow)
+    {
+        @for (int i = pageEnd - 4; i < pageEnd; i++)
+        {
+            var pg = i + 1;
+            if (currentPage == pg)
+            {
+                <span class="s-pagination--item is-selected" aria-current="page">@string.Format("{0:n0}", pg)</span>
+            }
+            else
+            {
+                <a href="@Model.PageToUrl(pg)" class="s-pagination--item">@string.Format("{0:n0}", pg)</a>
+            }
+        }
+        <span class="s-pagination--item s-pagination--item__clear">…</span>
+    }
+    @if (currentPage < pageEnd)
+    {
+        <a class="s-pagination--item" href="@Model.PageToUrl?.Invoke(currentPage + 1)">next</a>
+        <a class="s-pagination--item" href="@Model.PageToUrl?.Invoke(pageEnd)">last</a>
+    }
+    else
+    {
+        <span class="s-pagination--item">next</span>
+        <span class="s-pagination--item">last</span>
+    }
+</div>

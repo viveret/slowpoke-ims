@@ -1,0 +1,17 @@
+@model DocumentProvidersViewModel
+@{
+}
+<div class="d-grid pt96">
+    <h1 class="grid--item">@ViewData["Title"]</h1>
+    <h2 class="grid--item">Read Only</h2>
+    @foreach (var item in Model.ReadOnly)
+    {
+        @Html.DisplayFor(m => item)
+    }
+
+    <h2 class="grid--item">Read and Write</h2>
+    @foreach (var item in Model.ReadOnly)
+    {
+        @Html.DisplayFor(m => item)
+    }
+</div>

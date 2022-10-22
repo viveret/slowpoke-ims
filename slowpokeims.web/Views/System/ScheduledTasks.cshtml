@@ -1,0 +1,14 @@
+@model ScheduledTasksViewModel
+@{
+    ViewData["Title"] = "Scheduled Tasks";
+}
+<div class="flex--item pt64">
+    <h1 class="fs-title">@ViewData["Title"]</h1>
+    <ul>
+        @foreach (var task in Model.Tasks)
+        {
+            var taskTypeName = task.GetType().FullName;
+            <li><a asp-route-name="@taskTypeName" asp-action="ScheduledTaskDetails" asp-controller="System"><b>@task.Title</b> (@taskTypeName)</a></li>
+        }
+    </ul>
+</div>

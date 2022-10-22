@@ -1,0 +1,7 @@
+@model string
+@{
+    Layout = null;
+}
+<form asp-action="AddFavorite" asp-controller="SpecialFolders" asp-route-path="@Model" method="POST" data-form-replace-with-result="true">
+    <button type="submit" class="s-navigation--item">Add Favorite</button>
+</form>

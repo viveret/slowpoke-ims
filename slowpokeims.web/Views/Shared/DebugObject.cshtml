@@ -1,0 +1,28 @@
+@model DebugObjectViewModel
+@foreach (var p in Model.Value.GetType().GetProperties().Where(p => p.GetIndexParameters().Length == 0))
+{
+    var val = p.GetValue(Model.Value);
+
+    if (val is string s)
+    {
+        <span>@p.Name: @s</span>
+    }
+    else if (p.PropertyType.IsValueType == false && val is object o && Model.Depth < Model.MaxDepth)
+    {
+        var m = Model.Copy(o);
+        <div class="s-card">
+            <b>@p.Name</b>
+            <div>
+                <partial name="DebugObject" model="@m" />
+            </div>
+        </div>
+    }
+    else
+    {
+        var asStr = val?.ToString();
+        if (string.IsNullOrEmpty(asStr))
+            continue;
+            
+        <div class="">@p.Name: @asStr</div>
+    }
+}

@@ -1,0 +1,26 @@
+@inject slowpoke.core.Services.ISyncStateManager SyncStateManager
+@inject slowpoke.core.Models.Config.Config Config
+<a href="/" class="flex--item s-topbar--logo">
+    <!-- https://bulbapedia.bulbagarden.net/wiki/Slowpoke_(Pok%C3%A9mon) -->
+    <img src="@Config.System.TitleLogoSrc" width="@Config.System.TitleLogoWidth" style="@Config.System.TitleLogoStyle">
+    <span class="@Config.System.TitleClass">@Config.System.Title</span>
+</a>
+<ul class="s-navigation ml8 fw-nowrap">
+    @{ ViewData["isHorizontal"] = "true"; }
+    <partial name="_Navigation" />
+</ul>
+<div class="flex--item fl-grow1">
+    @using (Html.BeginForm("Index", "Home", FormMethod.Get))
+    {
+        <div class="d-grid grid__3 g8 ai-center">
+            <div class="grid--item grid--col2"><input class="s-input" name="Query" value="@(Context.Request.Query["Query"])" placeholder="Name, keyword, command..." /></div>
+            <div class="grid--item"><button class="s-btn s-btn__outlined" type="submit">Execute</button></div>
+        </div>
+    }
+</div>
+<div class="flex--item">
+    @{
+        var systemSyncState = SyncStateManager.GetForSystem();
+    }
+    @Html.DisplayFor(m => systemSyncState)
+</div>

@@ -1,0 +1,40 @@
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+@{
+    var meta = Model.Folder.HasMeta ? Model.Folder.Meta : null;
+    var title = meta?.Title;
+    var classSize = (ViewData["classSize"] as string) ?? "";
+    var badgeClass = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+    var titleHref = Model.Parent.TitleUrlResolver(Model);
+}
+<div class="s-card">
+    <div class="d-grid grid__12 g4">
+        <div class="grid--item grid--col11 d-flex">
+            <div class="flex--item fl-grow1">
+                <a class="fw-bold" href="@titleHref">
+                    &#x1F4C1;
+                    @if (string.IsNullOrWhiteSpace(title))
+                    {
+                        <span class="">@Model.Folder.Path</span>
+                    }
+                    else
+                    {
+                        <span class="">@title</span>
+                        <span class="">@Model.Folder.Path</span>
+                    }
+                </a>
+                <partial name="Paginated/ReadOnlyFolder/SubTitle" />
+            </div>
+        </div>
+        <partial name="DocActionsDropdown" />
+        <div class="grid--item grid--col12 d-flex fw-wrap g4">
+            @if (meta == null)
+            {
+                <span class="@badgeClass s-badge__danger">Does not have meta file</span>
+            }
+            else
+            {
+                @Html.DisplayFor(m => meta)
+            }
+        </div>
+    </div>
+</div>

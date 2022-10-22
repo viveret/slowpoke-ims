@@ -1,0 +1,10 @@
+@using slowpoke.core.Models
+@model IndexViewModel
+@{
+    ViewData["Title"] = "This Computer";
+    var r = (QueryDocumentsResult) Model;
+}
+@section Scripts {
+    <script src="~/js/Home/index.js"></script>
+}
+@Html.DisplayFor(m => r)

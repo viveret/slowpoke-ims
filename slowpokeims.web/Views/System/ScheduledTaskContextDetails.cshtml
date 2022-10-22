@@ -1,0 +1,27 @@
+@using slowpoke.core.Extensions
+@model ScheduledTasksViewModel
+@{
+    ViewData["Title"] = $"{Model.TaskContext.Id} - {Model.TaskContext.Task.Title} - Scheduled Task Details";
+}
+<div class="flex--item pt64">
+    <h1 class="fs-title">@ViewData["Title"]</h1>
+    <div><b>Started:</b> @Model.TaskContext.WhenStarted</div>
+    <div><b>Completed:</b> @Model.TaskContext.WhenCompleted</div>
+    @if (Model.TaskContext.Error == null)
+    {
+        <div>Completed with no error</div>
+    }
+    else
+    {
+        <b>Error:</b>
+        <div class="s-card">@Html.DisplayFor(m => m.TaskContext.Error)</div>
+    }
+    @if (Model.TaskContext.Log.Any())
+    {
+        var logVal = string.Join("\n", Model.TaskContext.Log);
+        <div>
+            <b>Log:</b>
+            @Html.TextAreaFor(m => logVal, new { @class = "w100" })
+        </div>
+    }
+</div>

@@ -1,0 +1,21 @@
+@model slowpoke.core.Models.Node.Docs.IReadOnlyDocument
+@{
+    var meta = Model.Meta;
+    var title = meta.Title;
+    var controllerName = ViewData["docController"]?.ToString() ?? Context.Request.RouteValues["controller"]?.ToString();
+    var titleHref = !string.IsNullOrEmpty(controllerName) ?
+        Url.Action(ViewData["docAction"]?.ToString() ?? "Details", controllerName, new { path = @Model.Path.PathValue })
+        :
+        "";
+}
+<a class="fw-bold" href="@titleHref">
+    @if (string.IsNullOrWhiteSpace(title))
+    {
+        <span class="">@Model.Path</span>
+    }
+    else
+    {
+        <span class="">@title</span>
+        <span class="">@Model.Path</span>
+    }
+</a>

@@ -1,0 +1,10 @@
+@model ConfigViewModel
+<style>
+</style>
+<div class="flex--item pt64">
+    <h1 class="fs-title">@ViewData["Title"]</h1>
+    <div class="d-grid grid__2 md:grid__1 g32 mt32">
+        <div class="grid--item s-card"><h2 class="fs-body3">Paths</h2>@Html.DisplayFor(m => m.Config.Paths)</div>
+        <div class="grid--item s-card"><h2 class="fs-body3">System</h2>@Html.DisplayFor(m => m.Config.System)</div>
+    </div>
+</div>

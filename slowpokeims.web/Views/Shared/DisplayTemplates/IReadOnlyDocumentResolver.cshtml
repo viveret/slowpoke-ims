@@ -1,0 +1,39 @@
+@model slowpoke.core.Services.Node.Docs.IReadOnlyDocumentResolver
+@{
+    var showHost = true;// ViewData["showHost"] == "true";    
+}
+<div class="s-card mt128">
+    @if (showHost)
+    {
+        @Html.DisplayFor(m => m.Host)
+    }
+    <div class="d-grid grid__12 g8">
+        <div class="grid--item grid--col11">
+            <a class="fw-bold">
+                @if (string.IsNullOrWhiteSpace(Model.InstanceName))
+                {
+                    <h4 class="fs-body2">@Model.InstanceName</h4>
+                }
+                else
+                {
+                    <h4 class="fs-body2">@Model.InstanceName</h4>
+                    <div class="fs-body1">@Model.InstanceName</div>
+                }
+            </a>
+            @Html.DisplayFor(m => m.Permissions)
+        </div>
+        <div class="grid--item">
+            <div class="ta-right">
+                <button class="s-btn s-btn__dropdown" type="button" role="button" aria-controls="popover-actions" data-controller="s-popover" data-action="s-popover#toggle" aria-expanded="false"></button>
+            </div>
+            <div id="popover-actions" class="s-popover" role="menu">
+            </div>
+        </div>
+    </div>
+    <div class="s-card">
+        @if (Model is slowpoke.core.Services.Node.Docs.ReadOnlyLocal.ReadOnlyLocalDriveDocumentProvider localDrive)
+        {
+            @Html.DisplayFor(m => localDrive.DriveInfo)
+        }
+    </div>
+</div>
