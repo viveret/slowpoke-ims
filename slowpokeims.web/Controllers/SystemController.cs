@@ -61,6 +61,8 @@ public class SystemController : Controller
         Config = config
     });
     
+#region No Category
+
     [HttpGet("system/npm-run-build"), ShowInNavBar]
     public ActionResult NpmRunBuild() {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -73,9 +75,6 @@ public class SystemController : Controller
         {
         });
     }
-
-
-
     
     // List of libraries, licenses, materials used (images, etc)
     [HttpGet("system/credits"), ShowInNavBar("Credits")]
@@ -83,8 +82,9 @@ public class SystemController : Controller
     {
     });
     
-
-    #region "Scheduled Tasks"
+#endregion
+#region Scheduled Tasks
+    
     // List of scheduled tasks
     [HttpGet("system/tasks"), ShowInNavBar("Tasks")]
     public ActionResult ScheduledTasks() => View(new ScheduledTasksViewModel
@@ -132,7 +132,9 @@ public class SystemController : Controller
     {
         TaskContext = scheduledTaskManager.GetContext(id),
     });
-    #endregion
+
+#endregion
+#region Document Providers
 
     [HttpGet("system/document-providers"), ShowInNavBar("Document Providers")]
     public ActionResult DocumentProviders() => View(new DocumentProvidersViewModel
@@ -148,13 +150,18 @@ public class SystemController : Controller
         Readwrite = documentProviderResolver.ReadWriteRemotes,
     });
 
+#endregion
+#region Broadcast Messages
+
     [HttpGet("system/mem-cached-broadcast-msgs"), ShowInNavBar("Memory Cached Broadcast Messages")]
     public ActionResult MemoryCachedBroadcastMessages() => View();
 
     [HttpGet("system/disk-cached-broadcast-msgs"), ShowInNavBar("Disk Cached Broadcast Messages")]
     public ActionResult DiskCachedBroadcastMessages() => View();
 
+#endregion
 #region Identites and Authentication
+
     [HttpGet("system/identity-authentication"), ShowInNavBar("Identites and Authentication")]
     public ActionResult IdentityAuthentication() => View();
 

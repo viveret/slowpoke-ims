@@ -12,11 +12,13 @@ namespace SlowPokeIMS.Web
     {
         public static void Main(string[] args)
         {
-            HttpSlowPokeClient.SystemCertificate = new X509Certificate2(pfxPath);
+            // need to handle this a lot better
+            var certPath = args.Length > 2 ? args[1] : null;
+            HttpSlowPokeClient.SystemCertificate = new X509Certificate2(certPath ?? pfxPath);
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        private static string pfxPath => System.IO.Directory.GetFiles("/home/viveret/.dotnet/corefx/cryptography/x509stores/my/", "*.pfx").Single();
+        private static string pfxPath => System.IO.Directory.GetFiles("/home/viveret/.dotnet/corefx/cryptography/x509stores/my/", "*.pfx").First();
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
