@@ -13,8 +13,7 @@ namespace SlowPokeIMS.Web
         public static void Main(string[] args)
         {
             // need to handle this a lot better
-            var certPath = args.Length > 2 ? args[1] : null;
-            HttpSlowPokeClient.SystemCertificate = new X509Certificate2(certPath ?? pfxPath);
+            HttpSlowPokeClient.SystemCertificate = new X509Certificate2(pfxPath);
             CreateWebHostBuilder(args).Build().Run();
         }
 
