@@ -66,7 +66,7 @@ public class IdentityAuthenticationService : IIdentityAuthenticationService
             if (model.AuthKeyString.EndsWith("*.pfx"))
             {
                 var dir = model.AuthKeyString.Substring(0, model.AuthKeyString.Length - "*.pfx".Length);
-                model.AuthKeyString = System.IO.Directory.GetFiles(dir, "*.pfx").FirstOrDefault() ?? string.Empty;
+                model.AuthKeyString = System.IO.Directory.EnumerateFiles(dir, "*.pfx").FirstOrDefault() ?? string.Empty;
             }
 
             if (File.Exists(model.AuthKeyString))

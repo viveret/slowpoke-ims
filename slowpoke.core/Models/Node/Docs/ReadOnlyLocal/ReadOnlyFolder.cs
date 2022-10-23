@@ -9,11 +9,11 @@ public class ReadOnlyFolder : ReadOnlyNode, IReadOnlyFolder
 {
     public override bool Exists => Directory.Exists(this.Path.ConvertToAbsolutePath().PathValue);
 
-    public override long SizeBytes => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.GetFiles(this.Path.ConvertToAbsolutePath().PathValue).Sum(f => OnUnauthorizedReturn0(() => new FileInfo(f).Length))) : 0L;
+    public override long SizeBytes => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Sum(f => OnUnauthorizedReturn0(() => new FileInfo(f).Length))) : 0L;
 
-    public int SizeFiles => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.GetFiles(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
+    public int SizeFiles => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
 
-    public int SizeFolders => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.GetDirectories(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
+    public int SizeFolders => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateDirectories(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
 
     public override NodePermissionCategories<bool> Permissions
     {

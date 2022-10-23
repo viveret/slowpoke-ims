@@ -73,12 +73,12 @@ public class UnifiedReadOnlyDocumentProvider : IReadOnlyDocumentResolver
 
     public int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken)
     {
-        return ForEachProviderCapture<IReadOnlyDocumentResolver, int>(p => p.GetCountOfNodesInFolder(folder, cancellationToken), amt => amt >= 0, cancellationToken, -1);
+        return ForEachProviderCapture<IReadOnlyDocumentResolver, int>(p => p.GetCountOfNodesInFolder(folder, cancellationToken), amt => amt > 0, cancellationToken, 0);
     }
 
     public int GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
-        return ForEachProviderCapture<IReadOnlyDocumentResolver, int>(p => p.GetCountOfNodes(options, cancellationToken), amt => amt >= 0, cancellationToken, -1);
+        return ForEachProviderCapture<IReadOnlyDocumentResolver, int>(p => p.GetCountOfNodes(options, cancellationToken), amt => amt > 0, cancellationToken, 0);
     }
 
     public IReadOnlyNode GetNodeAtPath(INodePath path, CancellationToken cancellationToken)

@@ -1,0 +1,38 @@
+@using slowpoke.core.Models.Node.Docs
+@model slowpoke.core.Models.Node.Docs.QueryDocumentOptions
+@using (Html.BeginForm("Index", "Home", FormMethod.Get))
+{
+    var inputClass = "s-input w100 h32";
+    var checkboxClass = "s-checkbox";
+    var categoriesToIncludeOnlyItems = Enum.GetValues<FileCategory>()
+        .Select(v => new SelectListItem() { Value = v.ToString(), Text = v.ToString(), Selected = Model.CategoriesToIncludeOnly?.Contains(v) ?? false });
+    var categoriesToExcludeItems = Enum.GetValues<FileCategory>()
+        .Select(v => new SelectListItem() { Value = v.ToString(), Text = v.ToString(), Selected = Model.CategoriesToExclude?.Contains(v) ?? false });
+    
+    <div class="s-card d-grid grid__8 g8 ai-center">
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.Recursive, new { @class = "s-label" })</div><div class="grid--item">@Html.CheckBoxFor(m => m.Recursive, new { @class = checkboxClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.SearchDocContents, new { @class = "s-label" })</div><div class="grid--item">@Html.CheckBoxFor(m => m.SearchDocContents, new { @class = checkboxClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.IncludeHidden, new { @class = "s-label" })</div><div class="grid--item">@Html.CheckBoxFor(m => m.IncludeHidden, new { @class = checkboxClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.IncludeFolders, new { @class = "s-label" })</div><div class="grid--item">@Html.CheckBoxFor(m => m.IncludeFolders, new { @class = checkboxClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.CategoriesToIncludeOnly, new { @class = "s-label" })</div><div class="grid--item">
+            <div class="s-select h96">
+                @Html.ListBoxFor(m => m.CategoriesToIncludeOnly, categoriesToIncludeOnlyItems, new { multiple = true, @class = "w100" })
+            </div>
+        </div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.CategoriesToExclude, new { @class = "s-label" })</div><div class="grid--item">
+            <div class="s-select h96">
+                @Html.ListBoxFor(m => m.CategoriesToExclude, categoriesToExcludeItems, new { multiple = true, @class = "w100" })
+            </div>
+        </div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.Extension, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.Extension, new { @class = inputClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.ContentType, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.ContentType, new { @class = inputClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.CreationDateMin, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.CreationDateMin, new { @class = inputClass, type = "date" })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.CreationDateMax, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.CreationDateMax, new { @class = inputClass, type = "date" })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.LastUpdateMin, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.LastUpdateMin, new { @class = inputClass, type = "date" })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.LastUpdateMax, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.LastUpdateMax, new { @class = inputClass, type = "date" })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.OrderByAscending, new { @class = "s-label" })</div><div class="grid--item">@Html.CheckBoxFor(m => m.OrderByAscending, new { @class = checkboxClass })</div>
+        <div class="grid--item ta-right">@Html.LabelFor(m => m.OrderByColumn, new { @class = "s-label" })</div><div class="grid--item">@Html.TextBoxFor(m => m.OrderByColumn, new { @class = inputClass })</div>
+        
+        <div class="grid--item"><button type="submit" class="s-btn s-btn__primary">Submit</button></div>
+    </div>
+}

@@ -17,7 +17,7 @@ namespace SlowPokeIMS.Web
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        private static string pfxPath => System.IO.Directory.GetFiles("/home/viveret/.dotnet/corefx/cryptography/x509stores/my/", "*.pfx").First();
+        private static string pfxPath => System.IO.Directory.EnumerateFiles("/home/viveret/.dotnet/corefx/cryptography/x509stores/my/", "*.pfx").First();
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)

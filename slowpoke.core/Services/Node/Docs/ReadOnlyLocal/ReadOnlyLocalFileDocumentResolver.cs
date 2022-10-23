@@ -5,6 +5,7 @@ using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.Node.Docs.ReadOnlyLocal;
 using slowpoke.core.Services.Broadcast;
+using slowpoke.core.Util;
 
 namespace slowpoke.core.Services.Node.Docs;
 
@@ -47,9 +48,9 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
 
     public ISlowPokeHost Host => new SlowPokeHostModel { Label = "localhost" };
 
-    public int GetCountOfNodes(CancellationToken cancellationToken) => Directory.GetFileSystemEntries(config.Paths.HomePath, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }).Count();
+    public int GetCountOfNodes(CancellationToken cancellationToken) => Directory.EnumerateFileSystemEntries(config.Paths.HomePath, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }).Count();
 
-    public int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken) => Directory.GetFileSystemEntries(folder.ConvertToAbsolutePath().PathValue, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false }).Count();
+    public int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken) => Directory.EnumerateFileSystemEntries(folder.ConvertToAbsolutePath().PathValue, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false }).Count();
 
     public virtual IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken) => new ReadOnlyDocumentMeta(this, node.Path);
 
@@ -129,15 +130,14 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
         path = options.Folder.HasValue() ? Path.Combine(path, options.Folder.PathValue): path;
         
         var ext = options.Extension;
-        var hasExt = !string.IsNullOrWhiteSpace(ext);
 
         if (Directory.Exists(path))
         {
-            var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = options.Recursive };
-            var items = options.IncludeFolders ?
-                            (hasExt ? Directory.GetFileSystemEntries(path, ext, enumOptions) : Directory.GetFileSystemEntries(path, "*", enumOptions)) :
-                            (hasExt ? Directory.GetFiles(path, ext, enumOptions) : Directory.GetFiles(path, "*", enumOptions));
-            var paths = items
+            var enumOptions = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = options.Recursive, ReturnSpecialDirectories = false, MaxRecursionDepth = 10 };
+            var paths = options.IncludeFolders ?
+                            DirectoryExtensions.EnumerateEntriesSafe(path, ext, enumOptions) :
+                            DirectoryExtensions.EnumerateFilesSafe(path, ext, enumOptions);
+            paths = paths
                 .Where(p => !config.Paths.IsOS(p));
             var pathCategories = paths.Select(p => (p, p.ToLower().Split('/')))
                                         .ToDictionary(k => k.p,

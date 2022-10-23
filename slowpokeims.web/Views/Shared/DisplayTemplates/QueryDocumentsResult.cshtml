@@ -5,7 +5,7 @@
     var itemView = Model.q.ItemView ?? ItemViewType.Default;
 }
 <div class="pt96">
-    @Html.DisplayFor(m => m.q)
+    @Html.EditorFor(m => m.q)
     <div class="d-grid grid__6 g8 ai-center pt8">
         <div class="grid--item grid--col4">
             <partial name="Pagination" model="Model.Documents" />
