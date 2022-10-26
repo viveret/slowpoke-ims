@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using slowpoke.core.Models.Config;
 using slowpoke.core.Models.Identity;
 using slowpoke.core.Services.Identity;
+using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
 using slowpoke.core.Services.Scheduled;
 using SlowPokeIMS.Web.Controllers.Attributes;
@@ -20,17 +22,20 @@ public class SystemController : Controller
     private readonly IDocumentProviderResolver documentProviderResolver;
     private readonly IScheduledTaskManager scheduledTaskManager;
     private readonly IIdentityAuthenticationService IdentityAuthenticationService;
+    private readonly ISlowPokeHostProvider slowPokeHostProvider;
 
     public SystemController(
         Config config,
         IDocumentProviderResolver documentProviderResolver,
         IScheduledTaskManager scheduledTaskManager,
-        IIdentityAuthenticationService identityAuthenticationService)
+        IIdentityAuthenticationService identityAuthenticationService,
+        ISlowPokeHostProvider slowPokeHostProvider)
     {
         this.config = config;
         this.documentProviderResolver = documentProviderResolver;
         this.scheduledTaskManager = scheduledTaskManager;
         IdentityAuthenticationService = identityAuthenticationService;
+        this.slowPokeHostProvider = slowPokeHostProvider;
     }
 
     [HttpGet("system/info"), ShowInNavBar("System Info")]    
@@ -148,6 +153,21 @@ public class SystemController : Controller
     {
         ReadOnly = documentProviderResolver.ReadRemotes,
         Readwrite = documentProviderResolver.ReadWriteRemotes,
+    });
+
+#endregion
+#region Hosts
+
+    [HttpGet("system/hosts"), ShowInNavBar("Hosts")]
+    public ActionResult Hosts() => View(new HostsViewModel
+    {
+        Hosts = slowPokeHostProvider.All,
+    });
+
+    [HttpGet("system/hosts/search")]
+    public ActionResult HostsSearch(CancellationToken ct) => View(new HostsViewModel
+    {
+        SearchResults = slowPokeHostProvider.SearchForLocalNetworkHosts(ct),
     });
 
 #endregion

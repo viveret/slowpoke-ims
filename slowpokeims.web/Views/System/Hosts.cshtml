@@ -1,0 +1,18 @@
+@model HostsViewModel
+@{
+
+}
+<h1>@ViewData["Title"]</h1>
+<div class="d-grid pt96">
+    @if (Model.Hosts != null && Model.Hosts.Any())
+    {
+        foreach (var item in Model.Hosts)
+        {
+            @Html.DisplayFor(m => item)
+        }
+    }
+    else
+    {
+        <p>No hosts</p>
+    }
+</div>

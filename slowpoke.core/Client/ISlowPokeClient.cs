@@ -19,6 +19,8 @@ public interface ISlowPokeClient : IDisposable, IBroadcastProvider
 
     T Query<T>(string path, Action<HttpRequestMessage> configureRequest, Func<string, T> responseHandler, CancellationToken cancellationToken);
     
+    T GraphQLQuery<T>(string query, CancellationToken cancellationToken);
+    
     bool HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
 
     IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);

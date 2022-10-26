@@ -30,8 +30,5 @@ public partial class Config
         
         [Default(true)]
         public bool SyncEnabled { get; set; } = true;
-
-
-        public string[] KnownHosts { get; set; } = new string[]{ "https://127.0.0.1:5001" };// Array.Empty<string>();
     }
 }

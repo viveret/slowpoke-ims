@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Config;
 using slowpoke.core.Models.Node.Docs;
@@ -152,5 +154,23 @@ public class HttpSlowPokeClient : ISlowPokeClient
     {
         ArgumentNullException.ThrowIfNull(path);
         return Query<bool>($"api/node-exists-at-path/{Uri.EscapeDataString(path.PathValue)}", null, str => bool.Parse(str), cancellationToken);
+    }
+
+    private class GraphQLResult<T>
+    {
+        public T data { get; set; }
+    }
+
+    public T GraphQLQuery<T>(string query, CancellationToken cancellationToken)
+    {
+        return Query<T>("api/graphql", request =>
+        {
+            request.Method = HttpMethod.Post;
+            var q = new JsonObject { { nameof(query), "query { " + query + " }" } };
+            var c = new StringContent(q.ToString());
+            c.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            request.Content = c;
+            request.Headers.Add("Accept", "application/json");
+        }, json => JsonSerializer.Deserialize<GraphQLResult<T>>(json).data, cancellationToken);
     }
 }

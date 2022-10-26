@@ -90,10 +90,10 @@ namespace SlowPokeIMS.Web
                 .ConfigureExecutionOptions(opt =>
                 {
                 })
-                .AddSchema<DocumentSchema>()
+                .AddSchema<ApiSchema>()
                 .UseMemoryCache()
                 .AddSystemTextJson()
-                .AddGraphTypes(typeof(DocumentSchema).Assembly)
+                .AddGraphTypes(typeof(ApiSchema).Assembly)
                 .AddErrorInfoProvider(opt => opt.ExposeExceptionDetails = true));
             
             services.AddDistributedMemoryCache();

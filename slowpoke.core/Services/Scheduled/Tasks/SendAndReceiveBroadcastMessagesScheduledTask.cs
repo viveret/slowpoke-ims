@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using slowpoke.core.Models.Config;
 using slowpoke.core.Services.Broadcast;
+using slowpoke.core.Services.Node;
 
 namespace slowpoke.core.Services.Scheduled.Tasks;
 
@@ -11,6 +12,8 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
     public ISyncStateManager SyncStateManager { get; }
     public IServiceProvider Services { get; }
 
+    private ISlowPokeHostProvider slowPokeHostProvider;
+
     public string Title => "Send and receive broadcast messages";
 
     public bool CanRunConcurrently => false;
@@ -20,11 +23,13 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
     public SendAndReceiveBroadcastMessagesScheduledTask(
         Config config,
         ISyncStateManager syncStateManager,
-        IServiceProvider services)
+        IServiceProvider services,
+        ISlowPokeHostProvider slowPokeHostProvider)
     {
         Config = config;
         SyncStateManager = syncStateManager;
         Services = services;
+        this.slowPokeHostProvider = slowPokeHostProvider;
     }
 
     public IScheduledTaskContext CreateContext(IScheduledTaskManager scheduledTaskManager)
@@ -34,7 +39,8 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
 
     public Task Execute(IScheduledTaskContext context)
     {
-        context.Log.Add($"Hello world! Known hosts: {Config.P2P.KnownHosts.Length}");
+        var knownHosts = slowPokeHostProvider.AllExceptCurrent;
+        context.Log.Add($"Hello world! Known hosts: {knownHosts.Count()}");
 
         var broadcasterProviderResolver = Services.GetRequiredService<IBroadcastProviderResolver>();
 

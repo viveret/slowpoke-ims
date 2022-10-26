@@ -3,6 +3,7 @@ using System.Text;
 using slowpoke.core.Client;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Config;
+using slowpoke.core.Services.Node;
 using slowpoke.core.Util;
 
 namespace slowpoke.core.Services.Broadcast;
@@ -13,9 +14,14 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
 {
     private static readonly Guid ProcessGuid = Guid.NewGuid();
 
-    public HttpBroadcastProvider(Config config)
+    private readonly ISlowPokeHostProvider slowPokeHostProvider;
+
+    public HttpBroadcastProvider(
+        Config config,
+        ISlowPokeHostProvider slowPokeHostProvider)
     {
         Config = config;
+        this.slowPokeHostProvider = slowPokeHostProvider;
     }
 
     public List<IBroadcastMessage> UnsentMessages => new List<IBroadcastMessage>();
@@ -34,11 +40,11 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
     {
         message.OriginGuid = ProcessGuid;
         var exceptions = new List<Exception>();
-        foreach (var knownHost in Config.P2P.KnownHosts)
+        foreach (var knownHost in slowPokeHostProvider.AllExceptCurrent)
         {
             try
             {
-                Publish(knownHost, message, cancellationToken);
+                Publish(knownHost.Endpoint.ToString(), message, cancellationToken);
             }
             catch (Exception e)
             {
@@ -63,12 +69,12 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
     {
         var exceptions = new List<Exception>();
         var msgsFromAll = new List<IBroadcastMessage>();
-        foreach (var knownHost in Config.P2P.KnownHosts)
+        foreach (var knownHost in slowPokeHostProvider.AllExceptCurrent)
         {
             IEnumerable<IBroadcastMessage> msgs;
             try
             {
-                msgs = Receive(knownHost, lastEventReceived, cancellationToken);
+                msgs = Receive(knownHost.Endpoint.ToString(), lastEventReceived, cancellationToken);
             }
             catch (Exception e)
             {
