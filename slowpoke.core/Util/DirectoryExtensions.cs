@@ -29,7 +29,8 @@ public static class DirectoryExtensions
         {
             if (System.IO.Directory.Exists(p))
             {
-                var fullPath = System.IO.Path.GetFullPath(p);
+                var dirInfo = new DirectoryInfo(p);
+                var fullPath = System.IO.Path.GetFullPath(dirInfo.LinkTarget ?? p);
                 if (!parentPathsTraversed.Add(fullPath))
                 {
                     continue;

@@ -8,9 +8,16 @@
     {
         foreach (var item in Model.SearchResults.Hosts)
         {
-            <div class="s-card">
-                @Html.DisplayFor(m => item)
-            </div>
+            try
+            {
+                <div class="s-card">
+                    @Html.DisplayFor(m => item)
+                </div>
+            }
+            catch (Exception e)
+            {
+                <p>@Html.DisplayFor(m => e)</p>
+            }
         }
     }
     else

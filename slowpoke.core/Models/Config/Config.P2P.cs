@@ -25,7 +25,7 @@ public partial class Config
         [Default(false)]
         public bool EnableCacheLocalNetworkHosts { get; set; }
         
-        [Default(false)]
+        [Default(true)]
         public bool AllowSearchForLocalNetworkHosts { get; set; }
         
         [Default(true)]
