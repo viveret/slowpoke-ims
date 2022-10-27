@@ -1,5 +1,3 @@
-using slowpoke.core.Models.SyncState;
-
 namespace slowpoke.core.Services.Scheduled;
 
 

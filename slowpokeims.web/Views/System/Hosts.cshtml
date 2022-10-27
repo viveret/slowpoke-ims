@@ -3,16 +3,24 @@
 
 }
 <h1>@ViewData["Title"]</h1>
-<div class="d-grid pt96">
-    @if (Model.Hosts != null && Model.Hosts.Any())
+<div class="pt96">
+    <div>
+        <a asp-action="HostsSearch" asp-controller="System">Search for hosts</a>
+    </div>
+    @foreach (var group in new [] { Model.AllHosts, Model.TrustedHosts, Model.KnownButUntrustedHosts })
     {
-        foreach (var item in Model.Hosts)
-        {
-            @Html.DisplayFor(m => item)
-        }
-    }
-    else
-    {
-        <p>No hosts</p>
+        <div class="s-card">
+            @if (group != null && group.Any())
+            {
+                foreach (var item in group)
+                {
+                    @Html.DisplayFor(m => item)
+                }
+            }
+            else
+            {
+                <p>No hosts</p>
+            }
+        </div>
     }
 </div>

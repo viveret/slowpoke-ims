@@ -1,27 +1,36 @@
 @using slowpoke.core.Extensions
 @model ScheduledTasksViewModel
 @{
-    ViewData["Title"] = $"{Model.TaskContext.Id} - {Model.TaskContext.Task.Title} - Scheduled Task Details";
+    ViewData["Title"] = $"{Model.TaskContext.Id} - {Model.TaskContext.Task?.Title} - Scheduled Task Details";
 }
 <div class="flex--item pt64">
+    <a asp-action="@nameof(SystemController.ScheduledTaskDetails)" asp-controller="System" asp-route-name="@Model.TaskContext.Task.GetType().FullName">&lt; Back to task details</a>
     <h1 class="fs-title">@ViewData["Title"]</h1>
     <div><b>Started:</b> @Model.TaskContext.WhenStarted</div>
     <div><b>Completed:</b> @Model.TaskContext.WhenCompleted</div>
-    @if (Model.TaskContext.Error == null)
+    @if (Model.TaskContext.HasCompleted)
     {
-        <div>Completed with no error</div>
+        if (Model.TaskContext.Error == null)
+        {
+            <div>Completed with no error</div>
+        }
+        else
+        {
+            <b>Completed with error:</b>
+            <div class="s-card">@Html.DisplayFor(m => m.TaskContext.Error)</div>
+        }
     }
-    else
+    else if (Model.TaskContext.Error != null)
     {
         <b>Error:</b>
         <div class="s-card">@Html.DisplayFor(m => m.TaskContext.Error)</div>
     }
-    @if (Model.TaskContext.Log.Any())
+    @if (Model.TaskContext.OutputLog.Any())
     {
-        var logVal = string.Join("\n", Model.TaskContext.Log);
+        var logVal = string.Join("\n", Model.TaskContext.OutputLog);
         <div>
             <b>Log:</b>
-            @Html.TextAreaFor(m => logVal, new { @class = "w100" })
+            @Html.TextAreaFor(m => logVal, new { @class = "w100 hmn4" })
         </div>
     }
 </div>

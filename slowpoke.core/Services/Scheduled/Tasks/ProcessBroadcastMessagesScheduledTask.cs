@@ -46,7 +46,7 @@ public class ProcessBroadcastMessagesScheduledTask : IScheduledTask
     {
         var allowSameOrigin = true;
         var events = BroadcasterProviderResolver.MemCached.Receive(lastEventGuidProcessed, context.CancellationToken);
-        context.Log.Add($"Processing {events.Count()} received events");
+        context.OutputLog.Add($"Processing {events.Count()} received events");
 
         var processedCount = 0;
         var sameOrigin = 0;
@@ -63,16 +63,16 @@ public class ProcessBroadcastMessagesScheduledTask : IScheduledTask
             // double processed in the event that the process is restarted and the cached
             // message data is lost, forcing complete reprocessing. should save to main config
             // or file.
-            context.Log.Add($"Processing {ev.EventGuid} ({ev.Type})");
+            context.OutputLog.Add($"Processing {ev.EventGuid} ({ev.Type})");
 
             var msg = ev.ConvertToTrueType();
             BroadcastMessageHandlerResolver.Handle(msg, context.CancellationToken);
             lastEventGuidProcessed = ev.EventGuid;
             // ^^^ should save this in case it is lost, which it definitely will be
         }
-        context.Log.Add($"Processed {processedCount} with {sameOrigin} from self (same origin)");
+        context.OutputLog.Add($"Processed {processedCount} with {sameOrigin} from self (same origin)");
         
-        context.Log.Add("Done!");
+        context.OutputLog.Add("Done!");
         return Task.CompletedTask;
     }
 }

@@ -8,7 +8,7 @@ using slowpoke.core.Services.Node.Docs;
 namespace slowpoke.core.Services.Scheduled.Tasks;
 
 
-public class ScanLocalAndPublishChangesScheduledTasks : IScheduledTask
+public class ScanLocalAndPublishChangesScheduledTask : IScheduledTask
 {
     public Config Config { get; }
     public ISyncStateManager SyncStateManager { get; }
@@ -21,7 +21,7 @@ public class ScanLocalAndPublishChangesScheduledTasks : IScheduledTask
     
     public bool CanRunManually => true;
 
-    public ScanLocalAndPublishChangesScheduledTasks(
+    public ScanLocalAndPublishChangesScheduledTask(
         Config config,
         ISyncStateManager syncStateManager,
         IDocumentProviderResolver documentProviderResolver,
@@ -45,7 +45,7 @@ public class ScanLocalAndPublishChangesScheduledTasks : IScheduledTask
         var query = new QueryDocumentOptions { SyncEnabled = true, Recursive = true, Path = Config.Paths.HomePath.AsIDocPath(Config) };
         var localNodesCount = DocumentProviderResolver.ReadLocal.GetCountOfNodes(query, context.CancellationToken);
         var localNodes = DocumentProviderResolver.ReadLocal.GetNodes(query, context.CancellationToken);
-        context.Log.Add($"Scanning for changes in {localNodesCount} local nodes that have enabled sync");
+        context.OutputLog.Add($"Scanning for changes in {localNodesCount} local nodes that have enabled sync");
 
         var broadcasterProviderResolver = Services.GetRequiredService<IBroadcastProviderResolver>();
 
@@ -91,14 +91,14 @@ public class ScanLocalAndPublishChangesScheduledTasks : IScheduledTask
                 exceptions.Add(e);
             }
         }
-        context.Log.Add($"Scanned {scanCount} (errors: {exceptions.Count}), of which {docChangedCount} had changes and {uptodateCount} did not");
+        context.OutputLog.Add($"Scanned {scanCount} (errors: {exceptions.Count}), of which {docChangedCount} had changes and {uptodateCount} did not");
 
         if (exceptions.Any())
         {
             throw new AggregateException(exceptions);
         }
 
-        context.Log.Add("Done!");
+        context.OutputLog.Add("Done!");
         return Task.CompletedTask;
     }
 }

@@ -1,9 +1,10 @@
+using Microsoft.Extensions.Logging;
 using slowpoke.core.Models.SyncState;
 
 namespace slowpoke.core.Services.Scheduled;
 
 
-public interface IScheduledTaskContext
+public interface IScheduledTaskContext: ILogger
 {
     Guid Id { get; set; }
     
@@ -20,8 +21,10 @@ public interface IScheduledTaskContext
     DateTime WhenStarted { get; set; }
     
     DateTime WhenCompleted { get; set; }
+    
+    bool HasCompleted { get; }
 
     Exception Error { get; set; }
 
-    List<string> Log { get; set; }
+    List<string> OutputLog { get; set; }
 }

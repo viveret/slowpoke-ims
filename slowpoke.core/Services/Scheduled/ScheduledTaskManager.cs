@@ -37,6 +37,7 @@ public class ScheduledTaskManager : IScheduledTaskManager
 
     public IEnumerable<Type> GetTaskTypes() => Tasks.Select(t => t.GetType());
 
+    // this is still not executing but displaying as executed without error
     public IScheduledTaskContext Execute(IScheduledTask task, bool asynchronous = true, bool immediately = false)
     {
         var ctx = task.CreateContext(this);
@@ -49,7 +50,7 @@ public class ScheduledTaskManager : IScheduledTaskManager
             }
             else
             {
-                taskExecutionQueue.Append(ctx);
+                taskExecutionQueue.Enqueue(ctx);
             }
         }
         else
@@ -100,7 +101,7 @@ public class ScheduledTaskManager : IScheduledTaskManager
     private void RemoveOldResults()
     {
         var now = DateTime.UtcNow;
-        var old = taskContexts.Values.Where(t => (now - t.WhenCompleted) > resultCacheLifespan).Select(t => t.Id).ToList();
+        var old = taskContexts.Values.Where(t => t.HasCompleted && (now - t.WhenCompleted) > resultCacheLifespan).Select(t => t.Id).ToList();
         foreach (var id in old)
         {
             taskContexts.TryRemove(id, out var _);

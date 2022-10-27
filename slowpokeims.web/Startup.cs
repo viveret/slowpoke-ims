@@ -26,6 +26,7 @@ using slowpoke.core.Services.Broadcast;
 using slowpoke.core.Services.Scheduled;
 using slowpoke.core.Services.Scheduled.Tasks;
 using slowpoke.core.Services.Identity;
+using slowpoke.core.Services.Http;
 
 namespace SlowPokeIMS.Web
 {
@@ -64,6 +65,7 @@ namespace SlowPokeIMS.Web
             services.AddTransient<Config>();
 
             services.AddTransient<IIdentityAuthenticationService, IdentityAuthenticationService>();
+            services.AddTransient<IIpAddressHistoryService, IpAddressHistoryService>();
 
             services.AddTransient<IBroadcastProvider, InMemoryBroadcastProvider>();
             services.AddTransient<IBroadcastProvider, HttpBroadcastProvider>();
@@ -82,9 +84,11 @@ namespace SlowPokeIMS.Web
             services.AddTransient<IBroadcastMessageHandlerResolver, BroadcastMessageHandlerResolver>();
 
             services.AddTransient<IScheduledTask, SendAndReceiveBroadcastMessagesScheduledTask>();
-            services.AddTransient<IScheduledTask, ScanLocalAndPublishChangesScheduledTasks>();
+            services.AddTransient<IScheduledTask, ScanLocalNetworkForPeersScheduledTask>();
+            services.AddTransient<IScheduledTask, ScanLocalAndPublishChangesScheduledTask>();
             services.AddTransient<IScheduledTask, ProcessBroadcastMessagesScheduledTask>();
             services.AddTransient<IScheduledTaskManager, ScheduledTaskManager>();
+            services.AddHostedService<ScheduledTaskRunnerHostedService>();
 
             services.AddGraphQL(cfg => cfg
                 .ConfigureExecutionOptions(opt =>

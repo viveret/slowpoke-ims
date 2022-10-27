@@ -40,7 +40,7 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
     public Task Execute(IScheduledTaskContext context)
     {
         var knownHosts = slowPokeHostProvider.AllExceptCurrent;
-        context.Log.Add($"Hello world! Known hosts: {knownHosts.Count()}");
+        context.OutputLog.Add($"Hello world! Known hosts: {knownHosts.Count()}");
 
         var broadcasterProviderResolver = Services.GetRequiredService<IBroadcastProviderResolver>();
 
@@ -50,7 +50,7 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
         {
             broadcasterProviderResolver.MemCached.SendUnsentMessages(msg =>
             {
-                context.Log.Add($"Sending #{sendCount}) {msg.EventGuid} ({msg.Type})");
+                context.OutputLog.Add($"Sending #{sendCount}) {msg.EventGuid} ({msg.Type})");
                 broadcasterProviderResolver.HttpKnownHosts.Publish(msg, context.CancellationToken);
                 sendCount++;
             });
@@ -59,12 +59,12 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
         {
             exceptions.Add(e);
         }
-        context.Log.Add($"Sent {sendCount} (errors: {exceptions.Count})");
+        context.OutputLog.Add($"Sent {sendCount} (errors: {exceptions.Count})");
 
         try
         {
             var msgs = broadcasterProviderResolver.HttpKnownHosts.Receive(Guid.Empty, context.CancellationToken).ToList();
-            context.Log.Add($"Received {msgs.Count}");
+            context.OutputLog.Add($"Received {msgs.Count}");
             broadcasterProviderResolver.MemCached.AddReceivedMessages(msgs);
         }
         catch (Exception e)
@@ -77,7 +77,7 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
             throw new AggregateException(exceptions);
         }
 
-        context.Log.Add("Done!");
+        context.OutputLog.Add("Done!");
         return Task.CompletedTask;
     }
 }

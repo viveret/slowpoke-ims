@@ -30,5 +30,9 @@ public partial class Config
         
         [Default(true)]
         public bool SyncEnabled { get; set; } = true;
+
+        public string[] TrustedHosts { get; set; } = Array.Empty<string>();
+
+        public string[] KnownButUntrustedHosts { get; set; } = Array.Empty<string>();
     }
 }

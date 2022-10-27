@@ -9,6 +9,7 @@ using slowpoke.core.Services.Identity;
 using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
 using slowpoke.core.Services.Scheduled;
+using slowpoke.core.Services.Scheduled.Tasks;
 using SlowPokeIMS.Web.Controllers.Attributes;
 using SlowPokeIMS.Web.ViewModels.System;
 
@@ -161,14 +162,16 @@ public class SystemController : Controller
     [HttpGet("system/hosts"), ShowInNavBar("Hosts")]
     public ActionResult Hosts() => View(new HostsViewModel
     {
-        Hosts = slowPokeHostProvider.All,
+        AllHosts = slowPokeHostProvider.All,
+        TrustedHosts = slowPokeHostProvider.Trusted,
+        KnownButUntrustedHosts = slowPokeHostProvider.KnownButUntrusted,
     });
 
+    // initiates a search request
     [HttpGet("system/hosts/search")]
-    public ActionResult HostsSearch(CancellationToken ct) => View(new HostsViewModel
-    {
-        SearchResults = slowPokeHostProvider.SearchForLocalNetworkHosts(ct),
-    });
+    public ActionResult HostsSearch(CancellationToken ct) =>
+        RedirectToAction(nameof(ScheduledTaskContextDetails),
+                            new { id = scheduledTaskManager.Execute(scheduledTaskManager.GetScheduledTask(typeof(ScanLocalNetworkForPeersScheduledTask).FullName)).Id });
 
 #endregion
 #region Broadcast Messages
