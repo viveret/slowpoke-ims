@@ -24,7 +24,7 @@ public class HttpSlowPokeClient : ISlowPokeClient
 
         handler.ServerCertificateCustomValidationCallback = 
             (request, serverCertificate, serverChain, sslPolicyErrors) => {
-                return serverCertificate.Thumbprint == SystemCertificate.Thumbprint;
+                return true;// serverCertificate.Thumbprint == SystemCertificate.Thumbprint;
             };
 
         HttpClient = new HttpClient(handler);
