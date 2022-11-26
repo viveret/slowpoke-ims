@@ -78,7 +78,7 @@ public static class DocActionExtensions
         {
             var attr = m.Item2;
             var controllerName = m.m.DeclaringType.Name.Substring(0, m.m.DeclaringType.Name.Length - "Controller".Length);
-            return new DocAction { Text = m.Item4?.Label ?? m.m.Name, Href = url.Action(m.m.Name, controllerName, new { path = doc.Path.PathValue }), InlineAction = attr?.InlineAction ?? false };
+            return new DocAction { Text = m.Item4?.Label ?? m.m.Name, Href = url.ActionLink(m.m.Name, controllerName, values: new { path = doc.Path.PathValue }), InlineAction = attr?.InlineAction ?? false };
         }).ToList();
         return new DocActionsList { Items = actions };
     }

@@ -61,7 +61,7 @@
         <div class="grid--item grid--col12 s-card">
             @if (string.IsNullOrWhiteSpace(allText))
             {
-                var urlRaw = @Url.Action("Raw", "Home", new { path = Model.Path.PathValue });
+                var urlRaw = @Url.ActionLink("Raw", "Home", values: new { path = Model.Path.PathValue });
                 if (isPDF)
                 {
                     <embed src="@urlRaw" class="w100" />

@@ -118,8 +118,8 @@ public class SystemController : Controller
     {
         Task = scheduledTaskManager.GetScheduledTasks().Where(t => t.GetType().FullName == name).SingleOrDefault(),
         Contexts = scheduledTaskManager.GetScheduledTaskContextsForTask(name),
-        RunUrl = Url.Action(nameof(RunScheduledTask), new { name }),
-        QueueUrl = Url.Action(nameof(QueueScheduledTask), new { name }),
+        RunUrl = Url.ActionLink(nameof(RunScheduledTask), values: new { name }),
+        QueueUrl = Url.ActionLink(nameof(QueueScheduledTask), values: new { name }),
     });
 
     [HttpPost("system/tasks/run/{name}")]
