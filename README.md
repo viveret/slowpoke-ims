@@ -25,3 +25,7 @@ See TODO.md for details list of goals and in progress features.
 - *.web = MVC related code
 - *.tests = unit tests project
 - *.integration.tests = longer, more complex tests that utilize multiple services, projects, or running servers
+
+
+## Screenshots
+![screenshot of favorites](/docs/scrots/2022-11-25-favorites.jpg "Favorites")
