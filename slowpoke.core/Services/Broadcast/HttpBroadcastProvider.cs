@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using slowpoke.core.Client;
 using slowpoke.core.Models.Broadcast;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Services.Node;
 using slowpoke.core.Util;
 
@@ -36,7 +36,7 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
 
     public Guid OriginGuid => ProcessGuid;
 
-    public void Publish(IBroadcastMessage message, CancellationToken cancellationToken)
+    public async Task Publish(IBroadcastMessage message, CancellationToken cancellationToken)
     {
         message.OriginGuid = ProcessGuid;
         var exceptions = new List<Exception>();
@@ -44,7 +44,7 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
         {
             try
             {
-                Publish(knownHost.Endpoint.ToString(), message, cancellationToken);
+                await Publish(knownHost.Endpoint, message, cancellationToken);
             }
             catch (Exception e)
             {
@@ -59,13 +59,13 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
         }
     }
 
-    private void Publish(string knownHost, IBroadcastMessage message, CancellationToken cancellationToken)
+    private async Task Publish(Uri knownHost, IBroadcastMessage message, CancellationToken cancellationToken)
     {
-        using var client = HttpSlowPokeClient.Connect(knownHost, Config, cancellationToken);
-        client.Publish(message, cancellationToken);
+        using var client = await slowPokeHostProvider.OpenClient(knownHost, cancellationToken: cancellationToken);
+        await client.Publish(message, cancellationToken);
     }
 
-    public IEnumerable<IBroadcastMessage> Receive(Guid lastEventReceived, CancellationToken cancellationToken)
+    public async Task<IEnumerable<IBroadcastMessage>> Receive(Guid lastEventReceived, CancellationToken cancellationToken)
     {
         var exceptions = new List<Exception>();
         var msgsFromAll = new List<IBroadcastMessage>();
@@ -74,7 +74,7 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
             IEnumerable<IBroadcastMessage> msgs;
             try
             {
-                msgs = Receive(knownHost.Endpoint.ToString(), lastEventReceived, cancellationToken);
+                msgs = await Receive(knownHost.Endpoint, lastEventReceived, cancellationToken);
             }
             catch (Exception e)
             {
@@ -105,9 +105,9 @@ public class HttpBroadcastProvider: IHttpBroadcastProvider
         return msgsFromAll;
     }
 
-    private IEnumerable<IBroadcastMessage> Receive(string knownHost, Guid lastEventReceived, CancellationToken cancellationToken)
+    private async Task<IEnumerable<IBroadcastMessage>> Receive(Uri knownHost, Guid lastEventReceived, CancellationToken cancellationToken)
     {
-        using var client = HttpSlowPokeClient.Connect(knownHost, Config, cancellationToken);
-        return client.Receive(lastEventReceived, cancellationToken);
+        using var client = await slowPokeHostProvider.OpenClient(knownHost, cancellationToken: cancellationToken);
+        return await client.Receive(lastEventReceived, cancellationToken);
     }
 }

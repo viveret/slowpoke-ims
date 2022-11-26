@@ -6,7 +6,7 @@ namespace slowpoke.core.Models;
 
 public class PaginatedEnumerable<T>: IPaginatedEnumerable
 {
-    public IEnumerable<T> Items { get; set; }
+    public IEnumerable<T> Items { get; set; } = Enumerable.Empty<T>();
     
     public int Offset { get; set; }
     
@@ -14,5 +14,5 @@ public class PaginatedEnumerable<T>: IPaginatedEnumerable
     
     public int Total { get; set; }
 
-    IEnumerable IPaginatedEnumerable.Items { get => Items; set => Items = value as IEnumerable<T>; }
+    IEnumerable IPaginatedEnumerable.Items { get => Items; set => Items = (IEnumerable<T>) value; }
 }

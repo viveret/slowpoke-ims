@@ -1,3 +1,5 @@
+@using System.Collections
+@using System.Linq
 @model HostsViewModel
 @{
 
@@ -7,17 +9,22 @@
     <div>
         <a asp-action="HostsSearch" asp-controller="System">Search for hosts</a>
     </div>
-    @foreach (var group in new [] { Model.AllHosts, Model.TrustedHosts, Model.KnownButUntrustedHosts })
+    @foreach (var group in new KeyValuePair<string, IEnumerable>[] { new ("All", Model.AllHosts), new ("Trusted", Model.TrustedHosts), new ("Known but Untrusted", Model.KnownButUntrustedHosts) })
     {
-        <div class="s-card">
-            @if (group != null && group.Any())
+        var ct = 0;
+        <div class="pt32">
+            <h2>@group.Key</h2>
+            @if (group.Value != null)
             {
-                foreach (var item in group)
+                foreach (var item in group.Value)
                 {
-                    @Html.DisplayFor(m => item)
+                    ct++;
+                    <div class="s-card">
+                        <partial name="DisplayTemplates/SlowPokeHostViewModel" model="@item" />
+                    </div>
                 }
             }
-            else
+            @if (ct == 0)
             {
                 <p>No hosts</p>
             }

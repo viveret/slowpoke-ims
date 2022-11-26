@@ -1,6 +1,6 @@
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Broadcast.Messages;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Services.Identity;
 using slowpoke.core.Services.Node.Docs;
@@ -29,22 +29,22 @@ public class DocumentBroadcastMessageHandler : IBroadcastMessageHandler
         typeof(SyncStartedBroadcastMessage), typeof(SyncStoppedBroadcastMessage),
     };
 
-    public void Process(IBroadcastMessage message, CancellationToken cancellationToken)
+    public async Task Process(IBroadcastMessage message, CancellationToken cancellationToken)
     {
-        var rwl = DocumentProviderResolver.ReadWriteLocal;
+        var rwl = await DocumentProviderResolver.ReadWriteLocal;
         if (message is DocumentChangedBroadcastMessage docChanged)
         {
-            var p = docChanged.Fingerprint.Path.AsIDocPath(Config);
-            if (rwl.NodeExistsAtPath(p, cancellationToken))
+            var p = docChanged.Fingerprint!.Path.AsIDocPath(Config);
+            if (await rwl.NodeExistsAtPath(p, cancellationToken))
             {
                 var endpoint = IdentityAuthenticationService.GetEndpointForOriginGuid(message.OriginGuid, cancellationToken);
-                var nodeRemote = DocumentProviderResolver.OpenReadRemote(endpoint, null).GetNodeAtPath(p, cancellationToken);
+                var nodeRemote = (await DocumentProviderResolver.OpenReadRemote(endpoint, null)).GetNodeAtPath(p, cancellationToken);
                 var node = (IWritableDocument) rwl.GetNodeAtPath(docChanged.Fingerprint.Path.AsIDocPath(Config), cancellationToken);
                 using var nodeData = new MemoryStream();
-                node.WriteIfChanged(stream => nodeData.CopyTo(stream), cancellationToken);
-                var meta = node.GetWritableMeta(cancellationToken);
+                await node.WriteIfChanged(stream => nodeData.CopyTo(stream), cancellationToken);
+                var meta = await node.GetWritableMeta(cancellationToken);
                 // stream => nodeData.CopyTo(stream)
-                meta.WriteIfChanged(cancellationToken: cancellationToken);
+                await meta.WriteIfChanged(cancellationToken: cancellationToken);
             }
             else
             {
@@ -53,15 +53,15 @@ public class DocumentBroadcastMessageHandler : IBroadcastMessageHandler
         }
         else if (message is DocMetaChangedBroacastMessage docMetaChanged)
         {
-            if (rwl.NodeExistsAtPath(docMetaChanged.Fingerprint.Path.AsIDocPath(Config), cancellationToken))
+            if (await rwl.NodeExistsAtPath(docMetaChanged.Fingerprint!.Path.AsIDocPath(Config), cancellationToken))
             {
-                var node = (IWritableDocument) rwl.GetNodeAtPath(docMetaChanged.Fingerprint.Path.AsIDocPath(Config), cancellationToken);
+                var node = (IWritableDocument) await rwl.GetNodeAtPath(docMetaChanged.Fingerprint.Path.AsIDocPath(Config), cancellationToken);
                 using var nodeData = new MemoryStream();
                 // stream => nodeData.CopyTo(stream)
-                var meta = node.GetWritableMeta(cancellationToken);
+                var meta = await node.GetWritableMeta(cancellationToken);
                 meta.SyncEnabled = false;
                 // stream => nodeData.CopyTo(stream)
-                meta.WriteIfChanged(cancellationToken: cancellationToken);
+                await meta.WriteIfChanged(cancellationToken: cancellationToken);
             }
             else
             {
@@ -70,22 +70,22 @@ public class DocumentBroadcastMessageHandler : IBroadcastMessageHandler
         }
         else if (message is SyncStartedBroadcastMessage syncStarted)
         {
-            var node = (IWritableDocument) rwl.GetNodeAtPath(syncStarted.Fingerprint.Path.AsIDocPath(Config), cancellationToken);
+            var node = (IWritableDocument) await rwl.GetNodeAtPath(syncStarted.Fingerprint!.Path.AsIDocPath(Config), cancellationToken);
             using var nodeData = new MemoryStream();
             // stream => nodeData.CopyTo(stream)
-            var meta = node.GetWritableMeta(cancellationToken);
+            var meta = await node.GetWritableMeta(cancellationToken);
             meta.SyncEnabled = true;
             // stream => nodeData.CopyTo(stream)
-            meta.WriteIfChanged(cancellationToken: cancellationToken);
+            await meta.WriteIfChanged(cancellationToken: cancellationToken);
         }
         else if (message is SyncStoppedBroadcastMessage syncStopped)
         {
-            var node = (IWritableDocument) rwl.GetNodeAtPath(syncStopped.Fingerprint.Path.AsIDocPath(Config), cancellationToken);
+            var node = (IWritableDocument) rwl.GetNodeAtPath(syncStopped.Fingerprint!.Path.AsIDocPath(Config), cancellationToken);
             using var nodeData = new MemoryStream();
-            var meta = node.GetWritableMeta(cancellationToken);
+            var meta = await node.GetWritableMeta(cancellationToken);
             meta.SyncEnabled = false;
             // stream => nodeData.CopyTo(stream)
-            meta.WriteIfChanged(cancellationToken: cancellationToken);
+            await meta.WriteIfChanged(cancellationToken: cancellationToken);
         }
         else
         {

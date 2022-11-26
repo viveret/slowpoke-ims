@@ -11,17 +11,17 @@ public class BroadcastMessageRaw: IBroadcastMessage
 
     public Guid EventGuid { get; set; }
 
-    public string Type { get; set; }
+    public string Type { get; set; } = string.Empty;
     
     public DateTime? BroadcastSendDate { get; set; }
     
     public DateTime? BroadcastReceiveDate { get; set; }
 
-    public string Value { get; set; }
+    public string Value { get; set; } = string.Empty;
 
     public IBroadcastMessage ConvertToTrueType()
     {
-        var type = Assembly.GetExecutingAssembly().GetType(Type);
+        var type = Assembly.GetExecutingAssembly().GetType(Type)!;
         return (IBroadcastMessage)System.Text.Json.JsonSerializer.Deserialize(Value, type, new JsonSerializerOptions {  })!;
     }
 
@@ -29,6 +29,8 @@ public class BroadcastMessageRaw: IBroadcastMessage
 
     public void Serialize(Stream stream)
     {
+        ArgumentNullException.ThrowIfNull(stream);
+        
         BroadcastSendDate ??= DateTime.UtcNow;
 
         var typeBytes = Encoding.ASCII.GetBytes(Type);
@@ -45,6 +47,8 @@ public class BroadcastMessageRaw: IBroadcastMessage
 
     public static BroadcastMessageRaw Deserialize(Stream stream)
     {
+        ArgumentNullException.ThrowIfNull(stream);
+
         var ret = new BroadcastMessageRaw();
         ret.BroadcastReceiveDate = DateTime.UtcNow;
 
@@ -69,6 +73,8 @@ public class BroadcastMessageRaw: IBroadcastMessage
 
     private static byte[] DeserializeVarCharBytes(Stream stream)
     {
+        ArgumentNullException.ThrowIfNull(stream);
+
         var lengthBytes = new byte[4];
         stream.Read(lengthBytes);
         var typeLength = BitConverter.ToInt32(lengthBytes);
@@ -81,16 +87,28 @@ public class BroadcastMessageRaw: IBroadcastMessage
 
     public static BroadcastMessageRaw Parse(string str)
     {
-        const int guidLength = 32 + 4; // 32 digits and 4 dashes
-        var parts = str.Substring(guidLength * 2 + 1 * 2).Split('-', 4);
-        return new BroadcastMessageRaw
+        if (string.IsNullOrWhiteSpace(str))
         {
-            OriginGuid = Guid.Parse(str.Substring(0, guidLength)),
-            EventGuid = Guid.Parse(str.Substring(guidLength + 1, guidLength)),
-            Type = parts[0],
-            BroadcastSendDate = new DateTime(long.Parse(parts[1])),
-            BroadcastReceiveDate = new DateTime(long.Parse(parts[2])),
-            Value = parts[3],
-        };
+            throw new ArgumentNullException(nameof(str));
+        }
+
+        try
+        {
+            const int guidLength = 32 + 4; // 32 digits and 4 dashes
+            var parts = str.Substring(guidLength * 2 + 1 * 2).Split('-', 4);
+            return new BroadcastMessageRaw
+            {
+                OriginGuid = Guid.Parse(str.Substring(0, guidLength)),
+                EventGuid = Guid.Parse(str.Substring(guidLength + 1, guidLength)),
+                Type = parts[0],
+                BroadcastSendDate = new DateTime(long.Parse(parts[1])),
+                BroadcastReceiveDate = new DateTime(long.Parse(parts[2])),
+                Value = parts[3],
+            };
+        }
+        catch (Exception e)
+        {
+            throw new ArgumentException($"Could not parse '{str}' into {typeof(BroadcastMessageRaw).FullName}", nameof(str), e);
+        }
     }
 }

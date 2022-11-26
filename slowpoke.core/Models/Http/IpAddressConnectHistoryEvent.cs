@@ -6,7 +6,7 @@ public class IpAddressConnectHistoryEvent
 {
     public Guid EventId { get; set; }
     public DateTime WhenConnected { get; set; }
-    public string IpAddress { get; set; }
+    public string IpAddress { get; set; } = string.Empty;
     public Guid IdentityId { get; set; }
     public Guid AuthId { get; set; }
 }

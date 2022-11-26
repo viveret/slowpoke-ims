@@ -12,6 +12,11 @@ public class SyncStateManager : ISyncStateManager
     {
     }
 
+    public void ClearStaticVars()
+    {
+        SyncStates.Clear();
+    }
+
     public SyncStateModel GetForAction(Guid actionId)
     {
         if (SyncStates.TryGetValue(actionId, out var state))
@@ -28,7 +33,7 @@ public class SyncStateManager : ISyncStateManager
 
     public SyncStateModel GetForSystem() => GetForAction(Guid.Empty);
 
-    public void SetForAction(Guid actionId, SyncStateModel state) => SyncStates[actionId] = state;
+    public void SetForAction(Guid actionId, SyncStateModel state) => SyncStates[actionId] = (state ?? throw new ArgumentNullException(nameof(state))).Copy();
 
     public void SetForSystem(SyncStateModel state) => SetForAction(Guid.Empty, state);
 }

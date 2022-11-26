@@ -11,42 +11,42 @@ public class UnifiedWritableDocumentProvider : UnifiedReadOnlyDocumentProvider, 
     {
     }
 
-    public void ArchiveDocumentAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task ArchiveDocumentAtPath(INodePath path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public void ArchiveDocumentsInFolder(INodePath folder, CancellationToken cancellationToken)
+    public Task ArchiveDocumentsInFolder(INodePath folder, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IWritableDocument CopyDocumentTo(INodePath source, INodePath destination, CancellationToken cancellationToken)
+    public Task<IWritableDocument> CopyDocumentTo(INodePath source, INodePath destination, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public void DeleteDocumentAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task DeleteDocumentAtPath(INodePath path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public void DeleteDocumentsInFolder(INodePath folder, CancellationToken cancellationToken)
+    public Task DeleteDocumentsInFolder(INodePath folder, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IWritableDocument MoveDocumentTo(INodePath source, INodePath destination, CancellationToken cancellationToken)
+    public Task<IWritableDocument> MoveDocumentTo(INodePath source, INodePath destination, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IWritableDocument NewDocument(NewDocumentOptions options, CancellationToken cancellationToken)
+    public Task<IWritableDocument> NewDocument(NewDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Stream OpenWriteMeta(IWritableDocumentMeta docMeta, CancellationToken cancellationToken)
+    public Task<Stream> OpenWriteMeta(IWritableDocumentMeta docMeta, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

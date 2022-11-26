@@ -16,5 +16,5 @@ public class DocFingerprintBroacastMessage: BroadcastMessageBase
     {
     }
 
-    public NodeFingerprintModel Fingerprint { get; set; }
+    public NodeFingerprintModel? Fingerprint { get; set; }
 }

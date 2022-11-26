@@ -12,9 +12,9 @@ public interface IIdentityAuthenticationService
     
     IEnumerable<ISlowPokeIdentity> UntrustedIdentities { get; }
 
-    Uri GetEndpointForOriginGuid(Guid originGuid, CancellationToken cancellationToken);
+    Uri? GetEndpointForOriginGuid(Guid originGuid, CancellationToken cancellationToken);
 
-    void SetEndpointForOriginGuid(Guid originGuid, Uri endpoint, CancellationToken cancellationToken);
+    void SetEndpointForOriginGuid(Guid originGuid, Uri? endpoint, CancellationToken cancellationToken);
 
     ISlowPokeIdentity GetIdentityFromAuthGuid(Guid authGuid, CancellationToken cancellationToken);
     
@@ -24,5 +24,5 @@ public interface IIdentityAuthenticationService
 
     TrustLevel GetTrustLevel(ISlowPokeIdentity identity, CancellationToken cancellationToken);
     
-    void SetTrustLevel(ISlowPokeIdentity identity, TrustLevel level, CancellationToken cancellationToken);
+    void SetTrustLevel(ISlowPokeIdentity identity, TrustLevel? level, CancellationToken cancellationToken);
 }

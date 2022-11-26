@@ -1,0 +1,52 @@
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+@{
+    var meta = await Model.Model.Meta;
+    string allText = null;
+    bool isPDF = false;
+    bool isImage = false;
+    var contentType = await meta.ContentType;
+    if (!string.IsNullOrWhiteSpace(contentType))
+    {
+        switch (contentType)
+        {
+            case "application/pdf":
+            isPDF = true;
+            break;
+            case "text":
+            allText = await Model.Doc.ReadAllText(Encoding.Unicode, numLines: 5);
+            break;
+            default:
+            if (contentType.StartsWith("text/"))
+            {
+                allText = await Model.Doc.ReadAllText(Encoding.Unicode, numLines: 5);
+            }
+            else if (contentType.StartsWith("image/"))
+            {
+                isImage = true;
+            }
+            break;
+        }
+    }
+}
+<div class="grid--item grid--col12 s-card">
+    @if (string.IsNullOrWhiteSpace(allText))
+    {
+        var urlRaw = @Url.Action("Raw", "Home", new { path = Model.Model.Path.PathValue });
+        if (isPDF)
+        {
+            <embed src="@urlRaw" class="w100" />
+        }
+        else if (isImage)
+        {
+            <img src="@urlRaw" class="w50" />
+        }
+        else
+        {
+            <span class="fs-italic">unknown content type or extension</span>
+        }
+    }
+    else
+    {
+        <span class="ws-pre-line">@allText</span>
+    }
+</div>

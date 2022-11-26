@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+
 namespace slowpoke.core.Services.Scheduled;
 
 
@@ -23,8 +24,8 @@ public class ScheduledTaskRunnerHostedService : IHostedService, IDisposable
     {
         var count = Interlocked.Increment(ref executionCount);
 
-        _logger.LogInformation(
-            "Timed Hosted Service is working. Count: {Count}", count);
+        // _logger.LogInformation(
+        //     $"{nameof(ScheduledTaskRunnerHostedService)} is working. Count: {Count}", count);
 
         _scheduledTaskManager.ExecuteNextQueuedTask();
     }
@@ -36,7 +37,7 @@ public class ScheduledTaskRunnerHostedService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Timed Hosted Service running.");
+        // _logger.LogInformation($"{nameof(ScheduledTaskRunnerHostedService)} running.");
 
         _timer = new Timer(ExecuteTasks, null, TimeSpan.Zero,
             TimeSpan.FromSeconds(5));
@@ -46,7 +47,7 @@ public class ScheduledTaskRunnerHostedService : IHostedService, IDisposable
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Timed Hosted Service is stopping.");
+        // _logger.LogInformation($"{nameof(ScheduledTaskRunnerHostedService)} is stopping.");
 
         _timer?.Change(Timeout.Infinite, 0);
 

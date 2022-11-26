@@ -1,53 +1,49 @@
 using Microsoft.Extensions.DependencyInjection;
 using slowpoke.core.Models.Broadcast.Messages;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Services.Broadcast;
 using slowpoke.core.Services.Node.Docs;
+using SlowPokeIMS.Core.Services.Scheduled;
 
 namespace slowpoke.core.Services.Scheduled.Tasks;
 
 
-public class ScanLocalAndPublishChangesScheduledTask : IScheduledTask
+public class ScanLocalAndPublishChangesScheduledTask : ScheduledTaskBase
 {
-    public Config Config { get; }
-    public ISyncStateManager SyncStateManager { get; }
     public IDocumentProviderResolver DocumentProviderResolver { get; }
-    public IServiceProvider Services { get; }
+    public IBroadcastProviderResolver BroadcastProviderResolver { get; }
 
-    public string Title => "Scan local and publish changes";
+    public override string Title => "Scan local and publish changes";
 
-    public bool CanRunConcurrently => false;
+    public override bool CanRunConcurrently => false;
     
-    public bool CanRunManually => true;
+    public override bool CanRunManually => true;
 
     public ScanLocalAndPublishChangesScheduledTask(
         Config config,
         ISyncStateManager syncStateManager,
+        IServiceProvider services,
         IDocumentProviderResolver documentProviderResolver,
-        IServiceProvider services)
+        IBroadcastProviderResolver broadcastProviderResolver): base(config, syncStateManager, services)
     {
-        Config = config;
-        SyncStateManager = syncStateManager;
         DocumentProviderResolver = documentProviderResolver;
-        Services = services;
+        BroadcastProviderResolver = broadcastProviderResolver;
     }
 
-    public IScheduledTaskContext CreateContext(IScheduledTaskManager scheduledTaskManager)
+    public override async Task Execute(IScheduledTaskContext context)
     {
-        var ctx = new GenericScheduledTaskContext(scheduledTaskManager) { Services = Services, TaskTypeName = this.GetType().FullName };
-        ctx.SyncState = SyncStateManager.GetForAction(ctx.Id);
-        return ctx;
-    }
+        var remotes = await DocumentProviderResolver.ReadRemotes;
+        if (!remotes.Any())
+        {
+            throw new Exception("No remotes, cannot sync");
+        }
 
-    public Task Execute(IScheduledTaskContext context)
-    {
+        var rl = await DocumentProviderResolver.ReadLocal;
         var query = new QueryDocumentOptions { SyncEnabled = true, Recursive = true, Path = Config.Paths.HomePath.AsIDocPath(Config) };
-        var localNodesCount = DocumentProviderResolver.ReadLocal.GetCountOfNodes(query, context.CancellationToken);
-        var localNodes = DocumentProviderResolver.ReadLocal.GetNodes(query, context.CancellationToken);
+        var localNodesCount = await rl.GetCountOfNodes(query, context.CancellationToken);
+        var localNodes = await rl.GetNodes(query, context.CancellationToken);
         context.OutputLog.Add($"Scanning for changes in {localNodesCount} local nodes that have enabled sync");
-
-        var broadcasterProviderResolver = Services.GetRequiredService<IBroadcastProviderResolver>();
 
         int scanCount = 0, uptodateCount = 0, docChangedCount = 0, docMetaChangedCount = 0;
         var exceptions = new List<Exception>();
@@ -55,21 +51,21 @@ public class ScanLocalAndPublishChangesScheduledTask : IScheduledTask
         {
             try
             {
-                var meta = node.HasMeta ? node.Meta : null;
-                if (meta != null && meta.MetaExists)
+                var meta = await node.HasMeta ? await node.Meta : null;
+                if (meta != null && await meta.MetaExists)
                 {
                     if (meta.LastSyncDate.HasValue)
                     {
                         if (meta.LastSyncDate < meta.LastUpdate)
                         {
-                            var msg = new DocumentChangedBroadcastMessage(node.GetFingerprint(context.CancellationToken));
-                            broadcasterProviderResolver.MemCached.Publish(msg, context.CancellationToken);
+                            var msg = new DocumentChangedBroadcastMessage(await node.GetFingerprint(context.CancellationToken));
+                            await BroadcastProviderResolver.MemCached.Publish(msg, context.CancellationToken);
                             docChangedCount++;
                         }
                         else if (meta.LastSyncDate < meta.LastUpdate)
                         {
-                            var msg = new DocMetaChangedBroacastMessage(node.GetFingerprint(context.CancellationToken));
-                            broadcasterProviderResolver.MemCached.Publish(msg, context.CancellationToken);
+                            var msg = new DocMetaChangedBroacastMessage(await node.GetFingerprint(context.CancellationToken));
+                            await BroadcastProviderResolver.MemCached.Publish(msg, context.CancellationToken);
                             docMetaChangedCount++;
                         }
                         else
@@ -79,8 +75,8 @@ public class ScanLocalAndPublishChangesScheduledTask : IScheduledTask
                     }
                     else
                     {
-                        var msg = new SyncStartedBroadcastMessage(node.GetFingerprint(context.CancellationToken));
-                        broadcasterProviderResolver.MemCached.Publish(msg, context.CancellationToken);
+                        var msg = new SyncStartedBroadcastMessage(await node.GetFingerprint(context.CancellationToken));
+                        await BroadcastProviderResolver.MemCached.Publish(msg, context.CancellationToken);
                         docChangedCount++;
                     }
                 }
@@ -99,6 +95,5 @@ public class ScanLocalAndPublishChangesScheduledTask : IScheduledTask
         }
 
         context.OutputLog.Add("Done!");
-        return Task.CompletedTask;
     }
 }

@@ -5,11 +5,11 @@ namespace slowpoke.core.Models.Node.Docs;
 public interface IReadOnlyDocumentMeta
 {
     INodePath Path { get; }
-    bool MetaExists { get; }
+    Task<bool> MetaExists { get; }
     bool Favorited { get; }
     bool SyncEnabled { get; }
     string Title { get; }
-    string ContentType { get; }
+    Task<string> ContentType { get; }
     DateTime CreationDate { get; }
     DateTime AccessDate { get; }
     DateTime LastUpdate { get; }
@@ -22,7 +22,7 @@ public interface IReadOnlyDocumentMeta
 
     JsonObject MetaJson { get; }
 
-    IReadOnlyDocument GetDocument(CancellationToken cancellationToken);
+    Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken);
     
     string ComputeMetaHash();
 }

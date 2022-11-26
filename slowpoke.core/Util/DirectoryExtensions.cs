@@ -7,7 +7,7 @@ public static class DirectoryExtensions
         bool includeFolders,
         //this Func<string, string, EnumerationOptions, IEnumerable<string>> enumerateFileSystemEntries,
         string path, string ext, EnumerationOptions enumOptions,
-        HashSet<string> parentPathsTraversed = null)
+        HashSet<string>? parentPathsTraversed = null)
     {
         parentPathsTraversed ??= new HashSet<string>();
         var hasExt = !string.IsNullOrWhiteSpace(ext);

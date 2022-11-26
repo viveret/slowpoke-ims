@@ -13,7 +13,7 @@ public interface IWritableDocumentMeta : IReadOnlyDocumentMeta
     new DateTime? ArchivedDate { set; }
     new DateTime? DeletedDate { set; }
 
-    Stream OpenWriteMetaOnDisk(CancellationToken cancellationToken);
+    Task<Stream> OpenWriteMetaOnDisk(CancellationToken cancellationToken);
 
-    void WriteIfChanged(bool touch = true, CancellationToken cancellationToken = default);
+    Task WriteIfChanged(bool touch = true, CancellationToken cancellationToken = default);
 }

@@ -6,7 +6,7 @@ namespace slowpoke.core.Models.Node.Docs.ReadWriteLocal;
 public class WritableDocumentMeta : ReadOnlyDocumentMeta, IWritableDocumentMeta
 {
     private readonly IWritableDocumentResolver writableDocResolver;
-    private MemoryStream tmpStream;
+    private MemoryStream? tmpStream;
 
     public WritableDocumentMeta(IWritableDocumentResolver docResolver, INodePath path) : base(docResolver, path)
     {
@@ -87,19 +87,19 @@ public class WritableDocumentMeta : ReadOnlyDocumentMeta, IWritableDocumentMeta
         }
     }
 
-    public Stream OpenWriteMetaOnDisk(CancellationToken cancellationToken) => writableDocResolver.OpenWriteMeta(this, cancellationToken);
+    public Task<Stream> OpenWriteMetaOnDisk(CancellationToken cancellationToken) => writableDocResolver.OpenWriteMeta(this, cancellationToken);
 
-    public void WriteIfChanged(bool touch = false, CancellationToken cancellationToken = default)
+    public async Task WriteIfChanged(bool touch = false, CancellationToken cancellationToken = default)
     {
         if (touch)
         {
             (this as IWritableDocumentMeta).LastMetaUpdate = DateTime.UtcNow;
         }
 
-        using (var metaStreamDestination = OpenWriteMetaOnDisk(cancellationToken))
+        using (var metaStreamDestination = await OpenWriteMetaOnDisk(cancellationToken))
         {
             var str = MetaJson.ToString();
-            metaStreamDestination.Write(System.Text.Encoding.UTF8.GetBytes(str));
+            await metaStreamDestination.WriteAsync(System.Text.Encoding.UTF8.GetBytes(str));
         }
 
 

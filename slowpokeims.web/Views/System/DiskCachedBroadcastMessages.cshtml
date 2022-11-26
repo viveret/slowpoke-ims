@@ -1,7 +1,7 @@
 @inject slowpoke.core.Services.Broadcast.IBroadcastProviderResolver broadcast
 @{
-    var msgsSent = broadcast.MemCached.ReadPersistedSentMessages().ToList();
-    var msgsReceived = broadcast.MemCached.ReadPersistedReceivedMessages().ToList();
+    var msgsSent = (await broadcast.MemCached.ReadPersistedSentMessages()).ToList();
+    var msgsReceived = (await broadcast.MemCached.ReadPersistedReceivedMessages()).ToList();
     int i = 0, j = 0;
 }
 <h1>@ViewData["Title"]</h1>

@@ -1,0 +1,12 @@
+@using System.Collections
+@using System.Linq
+@model HostsViewModel
+@{
+
+}
+<h1>@ViewData["Title"]</h1>
+<div class="pt96">
+    <div class="s-card">
+        <partial name="DisplayTemplates/SlowPokeHostViewModel" model="@Model.Host" />
+    </div>
+</div>

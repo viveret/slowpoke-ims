@@ -1,11 +1,13 @@
 using System.Text;
+using System.Text.RegularExpressions;
+using slowpoke.core.Models.Configuration;
 
 namespace slowpoke.core.Models.Node.Docs;
 
 
 public static class DocPathExtensions
 {
-    public static INodePath AsIDocPath(this string path, Config.Config config)
+    public static INodePath AsIDocPath(this string path, Config config)
     {
         var fullDocsPath = System.Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (path.StartsWith("/"))
@@ -20,10 +22,21 @@ public static class DocPathExtensions
         {
             return new DocPathRelative(path, config);
         }
-        else
+        else if (IsValidPath(path))
         {
             return new DocPathRelative(path, config);
         }
+        else
+        {
+            throw new ArgumentOutOfRangeException(nameof(path));
+        }
+    }
+
+    private static readonly Regex ValidPathRegex = new("([a-z]+://)?[a-z0-9_/ -]+[a-z0-9_/ .-]+", RegexOptions.IgnoreCase);
+
+    private static bool IsValidPath(string path)
+    {
+        return ValidPathRegex.IsMatch(path);
     }
 
     public static bool HasValue(this INodePath path) => !string.IsNullOrWhiteSpace(path?.PathValue);

@@ -1,43 +1,32 @@
 using Microsoft.Extensions.DependencyInjection;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Services.Broadcast;
 using slowpoke.core.Services.Node;
+using SlowPokeIMS.Core.Services.Scheduled;
 
 namespace slowpoke.core.Services.Scheduled.Tasks;
 
 
-public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
+public class SendAndReceiveBroadcastMessagesScheduledTask : ScheduledTaskBase
 {
-    public Config Config { get; }
-    public ISyncStateManager SyncStateManager { get; }
-    public IServiceProvider Services { get; }
-
     private ISlowPokeHostProvider slowPokeHostProvider;
 
-    public string Title => "Send and receive broadcast messages";
+    public override string Title => "Send and receive broadcast messages";
 
-    public bool CanRunConcurrently => false;
+    public override bool CanRunConcurrently => false;
     
-    public bool CanRunManually => true;
+    public override bool CanRunManually => true;
 
     public SendAndReceiveBroadcastMessagesScheduledTask(
         Config config,
         ISyncStateManager syncStateManager,
         IServiceProvider services,
-        ISlowPokeHostProvider slowPokeHostProvider)
+        ISlowPokeHostProvider slowPokeHostProvider): base(config, syncStateManager, services)
     {
-        Config = config;
-        SyncStateManager = syncStateManager;
-        Services = services;
         this.slowPokeHostProvider = slowPokeHostProvider;
     }
 
-    public IScheduledTaskContext CreateContext(IScheduledTaskManager scheduledTaskManager)
-    {
-        return new GenericScheduledTaskContext(scheduledTaskManager) { Services = Services, TaskTypeName = this.GetType().FullName, SyncState = SyncStateManager.GetForSystem() };
-    }
-
-    public Task Execute(IScheduledTaskContext context)
+    public override async Task Execute(IScheduledTaskContext context)
     {
         var knownHosts = slowPokeHostProvider.AllExceptCurrent;
         context.OutputLog.Add($"Hello world! Known hosts: {knownHosts.Count()}");
@@ -48,7 +37,7 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
         var exceptions = new List<Exception>();
         try
         {
-            broadcasterProviderResolver.MemCached.SendUnsentMessages(msg =>
+            await broadcasterProviderResolver.MemCached.SendUnsentMessages(msg =>
             {
                 context.OutputLog.Add($"Sending #{sendCount}) {msg.EventGuid} ({msg.Type})");
                 broadcasterProviderResolver.HttpKnownHosts.Publish(msg, context.CancellationToken);
@@ -63,9 +52,9 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
 
         try
         {
-            var msgs = broadcasterProviderResolver.HttpKnownHosts.Receive(Guid.Empty, context.CancellationToken).ToList();
+            var msgs = (await broadcasterProviderResolver.HttpKnownHosts.Receive(Guid.Empty, context.CancellationToken)).ToList();
             context.OutputLog.Add($"Received {msgs.Count}");
-            broadcasterProviderResolver.MemCached.AddReceivedMessages(msgs);
+            await broadcasterProviderResolver.MemCached.AddReceivedMessages(msgs);
         }
         catch (Exception e)
         {
@@ -78,6 +67,5 @@ public class SendAndReceiveBroadcastMessagesScheduledTask : IScheduledTask
         }
 
         context.OutputLog.Add("Done!");
-        return Task.CompletedTask;
     }
 }

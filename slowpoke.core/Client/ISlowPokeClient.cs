@@ -1,5 +1,6 @@
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Node.Docs;
+using slowpoke.core.Models.SyncState;
 using slowpoke.core.Services.Broadcast;
 
 namespace slowpoke.core.Client;
@@ -8,20 +9,19 @@ namespace slowpoke.core.Client;
 public interface ISlowPokeClient : IDisposable, IBroadcastProvider
 {
     Uri Endpoint { get; }
-    
-    bool NodeExistsAtPath(INodePath path, CancellationToken cancellationToken);
-    
-    bool Ping(CancellationToken token);
+    Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken);
+    Task<bool> Ping(CancellationToken token);
+    Task<int> SearchCount(string path, QueryDocumentOptions? options, CancellationToken cancellationToken);
+    Task<T?> Search<T>(string path, object json, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken);
+    Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken);
+    Task<T?> GraphQLQuery<T>(string query, CancellationToken cancellationToken);
+    Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
+    Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);
+    Task<bool> Sync(bool asynchronous = true, bool immediately = false);
+    Task<SyncState> GetSyncState(CancellationToken cancellationToken);
+    Task<bool> IsUpToDate();
 
-    int SearchCount(string path, QueryDocumentOptions options, CancellationToken cancellationToken);
 
-    T Search<T>(string path, object json, Action<HttpRequestMessage> configureRequest, Func<string, T> responseHandler, CancellationToken cancellationToken);
-
-    T Query<T>(string path, Action<HttpRequestMessage> configureRequest, Func<string, T> responseHandler, CancellationToken cancellationToken);
-    
-    T GraphQLQuery<T>(string query, CancellationToken cancellationToken);
-    
-    bool HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
-
-    IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);
+    // Admin / actions
+    Task<bool> AddTrusted(string hostUri, bool testConnection, CancellationToken cancellationToken);
 }

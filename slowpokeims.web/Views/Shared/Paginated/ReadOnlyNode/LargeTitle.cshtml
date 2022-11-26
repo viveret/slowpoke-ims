@@ -1,0 +1,14 @@
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+@{
+    var meta = await Model.Model.HasMeta ? await Model.Model.Meta : null;
+    var title = meta?.Title;
+}
+@if (string.IsNullOrWhiteSpace(title))
+{
+    <h4 class="fs-body2">@Model.Model.Path</h4>
+}
+else
+{
+    <h4 class="fs-body2">@title</h4>
+    <div class="fs-body1">@Model.Model.Path</div>
+}

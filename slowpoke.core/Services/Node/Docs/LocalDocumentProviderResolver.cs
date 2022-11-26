@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
 using System.Net;
 using slowpoke.core.Client;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node;
 using slowpoke.core.Services.Node.Docs.ReadOnlyLocal;
+using SlowPokeIMS.Core.Collections;
+using SlowPokeIMS.Core.Extensions;
 
 namespace slowpoke.core.Services.Node.Docs;
 
@@ -13,7 +15,7 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
     private static IEnumerable<IReadOnlyDocumentResolver> CachedReadOnlyLocalNetworkProviders { get; set; } = Enumerable.Empty<IReadOnlyDocumentResolver>();
     private static Task? cacheTask;
 
-    public ISlowPokeHost Host { get; private set; }
+    public Task<ISlowPokeHost> Host { get; private set; }
 
     public Config Config { get; }
 
@@ -24,22 +26,24 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         {
             throw new Exception($"{nameof(Host)} already set");
         }
-        Host = localhost;
+        Host = Task.FromResult(localhost);
     }
 
     private readonly IEnumerable<IReadOnlyDocumentResolver> systemReadonlyProviders;
     private readonly IEnumerable<IWritableDocumentResolver> systemReadWriteProviders;
-
+    private readonly ISlowPokeHostProvider slowPokeHostProvider;
     private readonly ConcurrentDictionary<Uri, IReadOnlyDocumentResolver> cachedReadonlyRemoteProvider;
     private readonly ConcurrentDictionary<Uri, IWritableDocumentResolver> cachedReadWriteRemoteProvider;
 
     public LocalDocumentProviderResolver(
         IEnumerable<IReadOnlyDocumentResolver> readonlyProviders,
         IEnumerable<IWritableDocumentResolver> readWriteProviders,
+        ISlowPokeHostProvider slowPokeHostProvider,
         Config config)
     {
         this.systemReadonlyProviders = readonlyProviders ?? throw new ArgumentNullException(nameof(readonlyProviders));
         this.systemReadWriteProviders = readWriteProviders ?? throw new ArgumentNullException(nameof(readWriteProviders));
+        this.slowPokeHostProvider = slowPokeHostProvider ?? throw new ArgumentNullException(nameof(slowPokeHostProvider));
         this.Config = config ?? throw new ArgumentNullException(nameof(config));
         cachedReadonlyRemoteProvider = new ConcurrentDictionary<Uri, IReadOnlyDocumentResolver>();
         cachedReadWriteRemoteProvider = new ConcurrentDictionary<Uri, IWritableDocumentResolver>();
@@ -50,20 +54,20 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         }
     }
 
-    public IEnumerable<IReadOnlyDocumentResolver> AllReadonlyProviders => systemReadonlyProviders
+    public Task<IEnumerable<IReadOnlyDocumentResolver>> AllReadonlyProviders => Task.FromResult(systemReadonlyProviders
                                                                             .Concat(cachedReadonlyRemoteProvider.Values)
-                                                                            .Concat(ReadOnlyLocalDriveProviders)
-                                                                            .Concat(ReadOnlyLocalNetworkProviders);
-    
-    public IEnumerable<IWritableDocumentResolver> AllReadWriteProviders => systemReadWriteProviders.Concat(cachedReadWriteRemoteProvider.Values);//.Concat(ReadWriteLocalDriveProviders);
+                                                                            .Concat(ReadOnlyLocalDriveProviders.Result)
+                                                                            .Concat(ReadOnlyLocalNetworkProviders));
 
-    public IEnumerable<IReadOnlyDocumentResolver> ReadOnlyLocalDriveProviders => GetDrives().Select(d => new ReadOnlyLocalDriveDocumentProvider(d, this));
-    
+    public Task<IEnumerable<IWritableDocumentResolver>> AllReadWriteProviders => Task.FromResult(systemReadWriteProviders.Concat(cachedReadWriteRemoteProvider.Values));//.Concat(ReadWriteLocalDriveProviders);
+
+    public Task<IEnumerable<IReadOnlyDocumentResolver>> ReadOnlyLocalDriveProviders => Task.FromResult<IEnumerable<IReadOnlyDocumentResolver>>(GetDrives().Select(d => new ReadOnlyLocalDriveDocumentProvider(d, this)));
+
     public IEnumerable<IReadOnlyDocumentResolver> ReadOnlyLocalNetworkProviders => CachedReadOnlyLocalNetworkProviders;// { get; private set; } = Enumerable.Empty<IReadOnlyDocumentResolver>(); //.Select(d => new ReadOnlyLocalDriveDocumentProvider(d, this));
-    
+
     private IEnumerable<DriveInfo> GetDrives()
     {
-        return DriveInfo.GetDrives().Where(d => 
+        return DriveInfo.GetDrives().Where(d =>
             (d.DriveType == DriveType.Removable || d.DriveType == DriveType.Fixed || d.DriveType == DriveType.CDRom) &&
             d.TotalSize > 0 && d.AvailableFreeSpace > 0 && !Config.Paths.IsOS(d.Name));
     }
@@ -72,11 +76,11 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
     {
         if (Config.P2P.AutoCacheLocalNetworkHosts && !CachedReadOnlyLocalNetworkProviders.Any() && cacheTask == null)
         {
-            cacheTask = Task.Run(() =>
+            cacheTask = Task.Run(async () =>
             {
                 var list = new List<IReadOnlyDocumentResolver>();
                 CachedReadOnlyLocalNetworkProviders = list;
-                foreach (var resolver in SearchForLocalNetworkDocumentProviders(CancellationToken.None))
+                foreach (var resolver in await SearchForLocalNetworkDocumentProviders(CancellationToken.None))
                 {
                     list.Add(resolver);
                 }
@@ -84,7 +88,7 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         }
     }
 
-    private IEnumerable<IReadOnlyDocumentResolver> SearchForLocalNetworkDocumentProviders(CancellationToken cancellationToken)
+    private async Task<IEnumerable<IReadOnlyDocumentResolver>> SearchForLocalNetworkDocumentProviders(CancellationToken cancellationToken)
     {
         var noExceptionCount = 0;
         var exceptionCount = 0;
@@ -96,13 +100,19 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         var localIp = localAddresses.Where(ip => !ip.ToString().StartsWith("127.0.") && !ip.ToString().Equals("::1")).FirstOrDefault();
         var localIpStr = localIp?.ToString();
         var hasLocalIp = !string.IsNullOrWhiteSpace(localIpStr);
-        
+
         // first one is this one
-        yield return new HttpReadOnlyRemoteDocumentResolver(new HttpSlowPokeClient(new Uri($"https://{(hasLocalIp ? localIpStr : "localhost")}"), Config), this, Config);
+        var ret = new List<IReadOnlyDocumentResolver>()
+        {
+            new HttpReadOnlyRemoteDocumentResolver(
+                await slowPokeHostProvider.OpenClient(
+                    new Uri($"https://{(hasLocalIp ? localIpStr : "localhost")}"),
+                    cancellationToken: cancellationToken), Config, this)
+        };
 
         if (!Config.P2P.AllowSearchForLocalNetworkHosts || !hasLocalIp)
         {
-            yield break;
+            return ret;
         }
 
         var ipBase = string.Join(".", localIp.GetAddressBytes().Select(b => b.ToString()).Take(3)) + ".";
@@ -118,17 +128,17 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
 
             if (cancellationToken.IsCancellationRequested)
             {
-                yield break;
+                return ret;
             }
 
             var timeoutSrc = new CancellationTokenSource(500);
             var ip = $"{ipBase}{i}";
             var ping = false;
-            ISlowPokeClient resolver = null;
+            ISlowPokeClient? slowPokeClient = null;
             try
             {
-                resolver = HttpSlowPokeClient.Connect($"https://{ip}", Config);
-                ping = resolver.Ping(timeoutSrc.Token);
+                slowPokeClient = await slowPokeHostProvider.OpenClient(new Uri($"https://{ip}"), cancellationToken: cancellationToken);
+                ping = await slowPokeClient.Ping(timeoutSrc.Token);
                 noExceptionCount++;
             }
             catch (HttpRequestException)
@@ -140,88 +150,78 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
                 timeoutCount++;
             }
 
-            if (ping)
+            if (ping && slowPokeClient != null)
             {
                 successCount++;
-                yield return new HttpReadOnlyRemoteDocumentResolver(resolver, this, Config);
+                ret.Add(new HttpReadOnlyRemoteDocumentResolver(slowPokeClient, Config, this));
             }
             else
             {
                 softFailCount++;
             }
         }
+
+        return ret;
     }
 
     //public IEnumerable<IReadOnlyDocumentResolver> ReadWriteLocalDriveProviders => DriveInfo.GetDrives().Select(d => new ReadWriteLocalDriveDocumentProvider(d, this));
 
 
-    public NodePermissionCategories<IEnumerable<IReadOnlyDocumentResolver>> ResolveReadable
+    public Task<NodePermissionCategories<IEnumerable<IReadOnlyDocumentResolver>>> ResolveReadable
     {
         get
         {
-            return new NodePermissionCategories<IEnumerable<IReadOnlyDocumentResolver>>
-            {
-                CanRead = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                CanWrite = Enumerable.Empty<IReadOnlyDocumentResolver>(),
-                IsEncrypted = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                LimitedToUserOnly = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                LimitedToMachineOnly = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                LimitedToLocalNetworkOnly = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                LimitedToAllowedConnectionsOnly = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                UnlimitedUniversalPublicAccess = AllReadonlyProviders.Where(provider => provider.Permissions.CanRead),
-                IsRemote = Enumerable.Empty<IReadOnlyDocumentResolver>(),
-            };
+            return NodePermissionCategories<IReadOnlyDocumentResolver>.FilterPermissions(
+                AllReadonlyProviders, async provider => (await provider.Permissions).CanRead);
         }
     }
 
-    public NodePermissionCategories<IEnumerable<IWritableDocumentResolver>> ResolveWritable
+    public Task<NodePermissionCategories<IEnumerable<IWritableDocumentResolver>>> ResolveWritable
     {
         get
         {
-            return new NodePermissionCategories<IEnumerable<IWritableDocumentResolver>>
-            {
-                CanRead = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                CanWrite = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                IsEncrypted = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                LimitedToUserOnly = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                LimitedToMachineOnly = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                LimitedToLocalNetworkOnly = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                LimitedToAllowedConnectionsOnly = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                UnlimitedUniversalPublicAccess = AllReadWriteProviders.Where(provider => provider.Permissions.CanWrite),
-                IsRemote = Enumerable.Empty<IWritableDocumentResolver>(),
-            };
+            return NodePermissionCategories<IWritableDocumentResolver>.FilterPermissions(
+                AllReadWriteProviders, async provider => (await provider.Permissions).CanWrite);
         }
     }
 
-    public NodePermissionCategories<IReadOnlyDocumentResolver> UnifiedReadable
+    public Task<NodePermissionCategories<IReadOnlyDocumentResolver>> UnifiedReadable
     {
         get
         {
-            return ResolveReadable.Transform(p => (IReadOnlyDocumentResolver) new UnifiedReadOnlyDocumentProvider(this, p));
+            return ResolveReadable.TransformAsync(p => Task.FromResult<IReadOnlyDocumentResolver>(new UnifiedReadOnlyDocumentProvider(this, p)));
         }
     }
 
-    public NodePermissionCategories<IWritableDocumentResolver> UnifiedWritable
+    public Task<NodePermissionCategories<IWritableDocumentResolver>> UnifiedWritable
     {
         get
         {
-            return ResolveWritable.Transform<IWritableDocumentResolver>(p => new UnifiedWritableDocumentProvider(this, p));
+            return ResolveWritable.TransformAsync(p => Task.FromResult<IWritableDocumentResolver>(new UnifiedWritableDocumentProvider(this, p)));
         }
     }
 
-    public IReadOnlyDocumentResolver ReadLocal => systemReadonlyProviders.Single(p => p.Permissions.LimitedToUserOnly || p.Permissions.LimitedToMachineOnly);
+    public Task<IReadOnlyDocumentResolver> ReadLocal => systemReadonlyProviders.SingleAsync(FilterLocal);
 
-    public IWritableDocumentResolver ReadWriteLocal => systemReadWriteProviders.Single(p => p.Permissions.LimitedToUserOnly || p.Permissions.LimitedToMachineOnly);
+    public Task<IWritableDocumentResolver> ReadWriteLocal => systemReadWriteProviders.SingleAsync(FilterLocal);
 
-    public IEnumerable<IReadOnlyDocumentResolver> ReadRemotes => systemReadonlyProviders.Where(p => p.Permissions.IsRemote).Concat(cachedReadonlyRemoteProvider.Values).Concat(ReadOnlyLocalNetworkProviders);
+    private static async Task<bool> FilterLocal<T>(T p) where T: IReadOnlyDocumentResolver
+    {
+        var perms = await p.Permissions;
+        return perms.LimitedToUserOnly || perms.LimitedToMachineOnly;
+    }
 
-    public IEnumerable<IWritableDocumentResolver> ReadWriteRemotes => systemReadWriteProviders.Where(p => p.Permissions.IsRemote).Concat(cachedReadWriteRemoteProvider.Values);
+    public Task<IEnumerable<IReadOnlyDocumentResolver>> ReadRemotes => systemReadonlyProviders.WhereAsync(async p => (await p.Permissions).IsRemote).ConcatAsync(cachedReadonlyRemoteProvider.Values).ConcatAsync(ReadOnlyLocalNetworkProviders);
 
-    public IReadOnlyDocumentResolver OpenReadRemote(Uri endpoint, TimeSpan? cacheDuration)
+    public Task<IEnumerable<IWritableDocumentResolver>> ReadWriteRemotes => systemReadWriteProviders.WhereAsync(async p => (await p.Permissions).IsRemote).ConcatAsync(cachedReadWriteRemoteProvider.Values);
+
+    public bool IsForAutomatedTests => false;
+
+    public Task<IReadOnlyDocumentResolver> OpenReadRemote(Uri endpoint, TimeSpan? cacheDuration)
     {
         if (cachedReadonlyRemoteProvider.TryGetValue(endpoint, out var provider))
         {
-            return provider;
+            return Task.FromResult(provider);
         }
         else
         {
@@ -229,18 +229,18 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         }
     }
 
-    private IReadOnlyDocumentResolver OpenNewReadRemoteAndCache(Uri endpoint, TimeSpan? cacheDuration)
+    private async Task<IReadOnlyDocumentResolver> OpenNewReadRemoteAndCache(Uri endpoint, TimeSpan? cacheDuration)
     {
-        var provider = new HttpReadOnlyRemoteDocumentResolver(new HttpSlowPokeClient(endpoint, Config), this, Config);
+        var provider = new HttpReadOnlyRemoteDocumentResolver(await slowPokeHostProvider.OpenClient(endpoint, CancellationToken.None), Config, this);
         cachedReadonlyRemoteProvider[endpoint] = provider;
         return provider;
     }
 
-    public IWritableDocumentResolver OpenReadWriteRemote(Uri endpoint, TimeSpan? cacheDuration)
+    public Task<IWritableDocumentResolver> OpenReadWriteRemote(Uri endpoint, TimeSpan? cacheDuration)
     {
         if (cachedReadWriteRemoteProvider.TryGetValue(endpoint, out var provider))
         {
-            return provider;
+            return Task.FromResult(provider);
         }
         else
         {
@@ -248,9 +248,9 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         }
     }
 
-    private IWritableDocumentResolver OpenNewReadWriteRemoteAndCache(Uri endpoint, TimeSpan? cacheDuration)
+    private async Task<IWritableDocumentResolver> OpenNewReadWriteRemoteAndCache(Uri endpoint, TimeSpan? cacheDuration)
     {
-        var provider = new HttpReadWriteRemoteDocumentResolver(new HttpSlowPokeClient(endpoint, Config), this, Config);
+        var provider = new HttpReadWriteRemoteDocumentResolver(await slowPokeHostProvider.OpenClient(endpoint, CancellationToken.None), this, Config);
         cachedReadWriteRemoteProvider[endpoint] = provider;
         return provider;
     }

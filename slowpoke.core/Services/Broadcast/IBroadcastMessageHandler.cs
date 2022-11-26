@@ -7,5 +7,5 @@ public interface IBroadcastMessageHandler
 {
     Type[] MessageTypesAllowed { get; }
 
-    void Process(IBroadcastMessage message, CancellationToken cancellationToken);
+    Task Process(IBroadcastMessage message, CancellationToken cancellationToken);
 }

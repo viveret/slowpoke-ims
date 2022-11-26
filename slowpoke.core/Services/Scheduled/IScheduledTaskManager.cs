@@ -17,9 +17,11 @@ public interface IScheduledTaskManager
 
     IEnumerable<IScheduledTaskContext> GetScheduledTaskContextsForTask(IScheduledTask t);
 
-    IScheduledTaskContext Execute(IScheduledTask task, bool asynchronous = true, bool immediately = false);
+    Task<IScheduledTaskContext> Execute(IScheduledTask task, bool asynchronous = true, bool immediately = false);
     
-    void ExecuteNextQueuedTask();
+    Task<bool> HasQueuedTask();
+    
+    Task ExecuteNextQueuedTask();
 
     IScheduledTaskContext GetContext(Guid scheduledTaskContextId);
 }

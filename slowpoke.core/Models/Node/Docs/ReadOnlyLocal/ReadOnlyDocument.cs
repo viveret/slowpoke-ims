@@ -17,7 +17,7 @@ public class ReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
             throw new ArgumentException("path is not a document", nameof(this.Path));
     }
 
-    public Stream OpenRead() => Exists ? File.OpenRead(this.GetPathValidated()) : System.IO.Stream.Null;
+    public async Task<Stream> OpenRead() => await Exists ? File.OpenRead(this.GetPathValidated()) : System.IO.Stream.Null;
 
     protected string GetPathValidated()
     {
@@ -32,25 +32,27 @@ public class ReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
     }
 
     // different types of equals, this one performs hash equality (not byte equality)
-    public bool Equals(IReadOnlyDocument? other) => CompareTo(other) == 0;
+    public async Task<bool> Equals(IReadOnlyDocument? other) => await CompareTo(other) == 0;
 
-    public int CompareTo(IReadOnlyDocument? other)
+
+    // todo: allow compareTo to be async
+    public async Task<int> CompareTo(IReadOnlyDocument? other)
     {
         if (other != null)
         {
-            using var otherStream = other.OpenRead();
-            using var stream = OpenRead();
-            var otherStreamMD5 = otherStream.ComputeMD5FromStream();
-            var thisStreamMD5 = stream.ComputeMD5FromStream();
+            using var otherStream = await other.OpenRead();
+            using var stream = await OpenRead();
+            var otherStreamMD5 = otherStream.ComputeMD5FromStream(false);
+            var thisStreamMD5 = stream.ComputeMD5FromStream(false);
 
             return thisStreamMD5.CompareTo(otherStreamMD5);
         }
         return -1;
     }
 
-    public string ReadAllText(Encoding encoding, int numLines = 0)
+    public async Task<string> ReadAllText(Encoding encoding, int numLines = 0)
     {
-        using var stream = new System.IO.StreamReader(OpenRead(), encoding);
+        using var stream = new System.IO.StreamReader(await OpenRead(), encoding);
         if (numLines > 0)
         {
             var sb = new StringBuilder();
@@ -58,7 +60,7 @@ public class ReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
             const int numCharsPerline = 200;
             while (!stream.EndOfStream && numLinesRead < numLines)
             {
-                var line = stream.ReadLine();
+                var line = (await stream.ReadLineAsync()) ?? string.Empty;
                 if (line.Length < numCharsPerline)
                 {
                     sb.AppendLine(line);
@@ -89,82 +91,89 @@ public class ReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
         }
         else
         {
-            return stream.ReadToEnd();
+            return await stream.ReadToEndAsync();
         }
     }
 
-    public override void Sync(CancellationToken cancellationToken)
+    public override Task Sync(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
     }
 
-    public override void BroadcastChanges(CancellationToken cancellationToken)
+    public override Task BroadcastChanges(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
         //BroadcastProvider.Publish(new ChangedMessage());
     }
 
-    public override void PollForChanges(CancellationToken cancellationToken)
+    public override Task PollForChanges(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
         //BroadcastProvider.Receive();
     }
 
-    public override void TurnOnSync(CancellationToken cancellationToken)
+    public override Task TurnOnSync(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
     }
 
-    public override void TurnOffSync(CancellationToken cancellationToken)
+    public override Task TurnOffSync(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
         // Meta.SyncEnabled = false;
     }
 
-    public override string ComputeHash()
+    public override async Task<string> ComputeHash()
     {
-        using var stream = OpenRead();
-        return stream.ComputeMD5FromStream();
+        using var stream = await OpenRead();
+        return stream.ComputeMD5FromStream(false);
     }
 
-    public override void MergeChanges(CancellationToken cancellationToken)
+    public override Task MergeChanges(CancellationToken cancellationToken)
     {
         throw new ReadOnlyException();
         //documentResolver.MergeChangesForNode(this, cancellationToken);
     }
 
-    public override IEnumerable<INodeDiffBrief> FetchChanges(CancellationToken cancellationToken)
+    public override async Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken)
     {
-        var currentVersion = GetFingerprint(cancellationToken);
-        var otherVersions = documentResolver.FetchFingerprintsForNode(this, cancellationToken);
+        var currentVersion = await GetFingerprint(cancellationToken);
+        var otherVersions = await documentResolver.FetchFingerprintsForNode(this, cancellationToken);
         return otherVersions.Select(v => new NodeDiffBrief(currentVersion, v));
     }
 
-    public override INodeFingerprint GetFingerprint(CancellationToken cancellationToken)
+    public override async Task<INodeFingerprint> GetFingerprint(CancellationToken cancellationToken)
     {
-        return new NodeFingerprintModel(Path, ComputeHash(), Meta.LastUpdate, Meta.ComputeMetaHash(), Meta.LastMetaUpdate);
+        var meta = await Meta;
+        return new NodeFingerprintModel(Path, await ComputeHash(), meta.LastUpdate, meta.ComputeMetaHash(), meta.LastMetaUpdate);
     }
 
-    public override bool Exists => File.Exists(this.Path.ConvertToAbsolutePath().PathValue);
+    public override Task<bool> Exists => Task.FromResult(File.Exists(this.Path.ConvertToAbsolutePath().PathValue));
 
-    public override long SizeBytes => Exists ? OnUnauthorizedReturn0(() => new FileInfo(this.GetPathValidated()).Length) : 0L;
+    public override Task<long> SizeBytes => GetSizeBytesAsync();
 
-    public string ContentType { get => documentResolver.GetContentTypeFromExtension(this.Path.PathValue.GetFullExtension()); }
+    private async Task<long> GetSizeBytesAsync()
+    {
+        return await Exists ? OnUnauthorizedReturn0(() => new FileInfo(this.GetPathValidated()).Length) : 0L;
+    }
 
-    public override NodePermissionCategories<bool> Permissions
+    public Task<string> GetContentType() => documentResolver.GetContentTypeFromExtension(this.Path.PathValue.GetFullExtension());
+
+    public override Task<NodePermissionCategories<bool>> Permissions
     {
         get
         {
-            return new NodePermissionCategories<bool>
+            var accessControl = new FileInfo(this.Path.ConvertToAbsolutePath().PathValue).GetAccessControl();
+            return Task.FromResult(new NodePermissionCategories<bool>
             {
-                CanRead = Exists && new FileInfo(this.Path.ConvertToAbsolutePath().PathValue).GetAccessControl() != null,
-                CanWrite = Exists && new FileInfo(this.Path.ConvertToAbsolutePath().PathValue).GetAccessControl() != null,
+                CanRead = Exists.Result && accessControl != null,
+                CanWrite = Exists.Result && accessControl != null,
                 LimitedToUserOnly = false,
                 LimitedToMachineOnly = true,
                 LimitedToAllowedConnectionsOnly = false,
                 LimitedToLocalNetworkOnly = false,
                 UnlimitedUniversalPublicAccess = false,
-            };
+            });
         }
     }
 }

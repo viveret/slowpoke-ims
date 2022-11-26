@@ -22,12 +22,12 @@ public class WritableDocument : ReadOnlyDocument, IWritableDocument
     }
 
     // todo: fix this, if client calls with using() then the stream will be closed prematurely and cause problems
-    public void WriteIfChanged(Action<Stream> writer, CancellationToken cancellationToken)
+    public async Task WriteIfChanged(Action<Stream> writer, CancellationToken cancellationToken)
     {
         var old = new ReadOnlyDocument(DocumentResolver, BroadcastProvider, Path);
-        var streamDiff = new StreamDiff(writer, old.OpenRead(), cancellationToken);
+        // var streamDiff = new StreamDiff(writer, await old.OpenRead(), true, true, cancellationToken);
         
-        var diff = old != null ? new DocumentDiff(old, this) : null;
+        var diff = old != null ? await DocumentDiff.Create(old, this, true, cancellationToken) : null;
 
         if (diff == null || diff.HasChanged)
         {
@@ -46,69 +46,72 @@ public class WritableDocument : ReadOnlyDocument, IWritableDocument
             }
             
             // save meta to local file            
-            WriteMeta(cancellationToken);
+            await WriteMeta(cancellationToken);
         }
     }
 
-    public void WriteMeta(CancellationToken cancellationToken)
+    public async Task WriteMeta(CancellationToken cancellationToken)
     {
-        var meta = GetWritableMeta(cancellationToken);
-        meta.WriteIfChanged(touch: true, cancellationToken);
+        var meta = await GetWritableMeta(cancellationToken);
+        await meta.WriteIfChanged(touch: true, cancellationToken);
     }
 
-    public override IReadOnlyDocumentMeta Meta
+    public override Task<IReadOnlyDocumentMeta> Meta
     {
-        get => (IReadOnlyDocumentMeta)writableMeta ?? base.Meta;
+        get => writableMeta != null ? Task.FromResult<IReadOnlyDocumentMeta>(writableMeta) : base.Meta;
     }
 
-    public IWritableDocumentMeta GetWritableMeta(CancellationToken cancellationToken)
+    public Task<IWritableDocumentMeta> GetWritableMeta(CancellationToken cancellationToken)
     {
-        return writableMeta ??= new WritableDocumentMeta(DocumentResolver, this.Path);
+        return Task.FromResult<IWritableDocumentMeta>(writableMeta ??= new WritableDocumentMeta(DocumentResolver, this.Path));
     }
 
-    public override void TurnOnSync(CancellationToken cancellationToken)
+    public override async Task TurnOnSync(CancellationToken cancellationToken)
     {
-        BroadcastProvider.Publish(new SyncStartedBroadcastMessage(GetFingerprint(cancellationToken) as NodeFingerprintModel), cancellationToken);
+        await BroadcastProvider.Publish(new SyncStartedBroadcastMessage((NodeFingerprintModel) await GetFingerprint(cancellationToken)), cancellationToken);
 
-        var meta = GetWritableMeta(cancellationToken);
+        var meta = await GetWritableMeta(cancellationToken);
         meta.SyncEnabled = true;
-        meta.WriteIfChanged(cancellationToken: cancellationToken);
-        BroadcastChanges(cancellationToken);
+        await meta.WriteIfChanged(cancellationToken: cancellationToken);
+        await BroadcastChanges(cancellationToken);
         // base.TurnOnSync(cancellationToken);
     }
 
-    public override void TurnOffSync(CancellationToken cancellationToken)
+    public override async Task TurnOffSync(CancellationToken cancellationToken)
     {
-        var meta = GetWritableMeta(cancellationToken);
+        var meta = await GetWritableMeta(cancellationToken);
         meta.SyncEnabled = false;
-        meta.WriteIfChanged(cancellationToken: cancellationToken);
-        BroadcastChanges(cancellationToken);
+        await meta.WriteIfChanged(cancellationToken: cancellationToken);
+        await BroadcastChanges(cancellationToken);
 
-        BroadcastProvider.Publish(new SyncStoppedBroadcastMessage(GetFingerprint(cancellationToken) as NodeFingerprintModel), cancellationToken);
+        await BroadcastProvider.Publish(new SyncStoppedBroadcastMessage((NodeFingerprintModel) await GetFingerprint(cancellationToken)), cancellationToken);
         // base.TurnOffSync(cancellationToken);
     }
 
-    public override void BroadcastChanges(CancellationToken cancellationToken)
+    public override async Task BroadcastChanges(CancellationToken cancellationToken)
     {
-        BroadcastProvider.Publish(new DocumentChangedBroadcastMessage(GetFingerprint(cancellationToken) as NodeFingerprintModel), cancellationToken);
+        await BroadcastProvider.Publish(new DocumentChangedBroadcastMessage((NodeFingerprintModel) await GetFingerprint(cancellationToken)), cancellationToken);
     }
 
-    public override IEnumerable<INodeDiffBrief> FetchChanges(CancellationToken cancellationToken)
+    public override async Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken)
     {
-        BroadcastProvider.Receive(Guid.Empty, cancellationToken);
+        await BroadcastProvider.Receive(Guid.Empty, cancellationToken);
         return Enumerable.Empty<INodeDiffBrief>();
     }
 
-    public override void MergeChanges(CancellationToken cancellationToken)
+    public override Task MergeChanges(CancellationToken cancellationToken)
     {
+        return Task.CompletedTask;
         // BroadcastProvider.Publish(new ChangesMessage(), cancellationToken);
     }
 
-    public override void PollForChanges(CancellationToken cancellationToken)
+    public override Task PollForChanges(CancellationToken cancellationToken)
     {
+        return Task.CompletedTask;
     }
 
-    public override void Sync(CancellationToken cancellationToken)
+    public override Task Sync(CancellationToken cancellationToken)
     {
+        return Task.CompletedTask;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -17,7 +18,10 @@ namespace SlowPokeIMS.Web
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        private static string pfxPath => System.IO.Directory.EnumerateFiles("/home/viveret/.dotnet/corefx/cryptography/x509stores/my/", "*.pfx").First();
+        private static string pfxPath => System.IO.Directory.EnumerateFiles(Path.Combine(
+                                                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                                ".dotnet/corefx/cryptography/x509stores/my/"
+                                            ), "*.pfx").First();
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)

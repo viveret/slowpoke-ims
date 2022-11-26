@@ -4,9 +4,13 @@ namespace slowpoke.core.Models.Identity;
 
 public class IdentityModel : ISlowPokeIdentity
 {
-    public IdentityModel()
-    {
-    }
+    public IdentityModel():
+        this(Guid.Empty, Guid.Empty, string.Empty, string.Empty, Array.Empty<byte>())
+    { }
+
+    public IdentityModel(ISlowPokeIdentity other):
+        this(other.IdentityGuid, other.AuthGuid, other.AuthAlg, other.AuthKeyString, other.AuthKeyValue)
+    { }
 
     public IdentityModel(Guid identityGuid, Guid authGuid, string authAlg, string authKeyString, byte[] authKeyValue)
     {
@@ -15,6 +19,7 @@ public class IdentityModel : ISlowPokeIdentity
         AuthAlg = authAlg;
         AuthKeyString = authKeyString;
         AuthKeyValue = authKeyValue;
+        Exists = true;
     }
 
     public Guid IdentityGuid { get; set; }
@@ -31,4 +36,8 @@ public class IdentityModel : ISlowPokeIdentity
     {
         return AuthAlg == other.AuthAlg && Array.Equals(AuthKeyValue, other.AuthKeyValue);
     }
+
+    public static ISlowPokeIdentity DoesNotExist { get; } = new IdentityModel { Exists = false };
+
+    public bool Exists { get; private set; }
 }

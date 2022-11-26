@@ -20,6 +20,12 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
         this.documentResolver = docResolver ?? throw new ArgumentNullException(nameof(docResolver));
         Path = path ?? throw new ArgumentNullException(nameof(path));
         var absPath = path.ConvertToAbsolutePath();
+
+        if (string.IsNullOrWhiteSpace(absPath.PathValue))
+        {
+            throw new ArgumentException($"Invalid path value '{path.PathValue}'", nameof(path));
+        }
+
         FileInfo = new FileInfo(absPath.PathValue);
         MetaFileInfo = new FileInfo(absPath.ConvertToMetaPath().PathValue);
         if (MetaFileInfo.Exists)
@@ -36,8 +42,8 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
 
     public INodePath Path { get; private set; }
 
-    public string Title { get => MetaJson.TryGetPropertyValue(nameof(Title), out var v) && v != null ? v.GetValue<string>() : default; }
-    public string ContentType { get => documentResolver.GetContentTypeFromExtension(FileInfo.FullName.GetFullExtension()); }
+    public string Title { get => MetaJson.TryGetPropertyValue(nameof(Title), out var v) && v != null ? v.GetValue<string>() : string.Empty; }
+    public Task<string> ContentType { get => documentResolver.GetContentTypeFromExtension(FileInfo.FullName.GetFullExtension()); }
     public DateTime CreationDate { get => FileInfo.CreationTimeUtc; }
     public DateTime LastUpdate { get => FileInfo.LastWriteTimeUtc; }
     public DateTime AccessDate { get => FileInfo.LastAccessTimeUtc; }
@@ -63,21 +69,21 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
     public DateTime? DeletedDate { get => TryGetDateTime(nameof(DeletedDate), out var dt) ? dt : null; }
     public string DocumentHash => ComputeDocHash();
     public string DocumentHashFunction => "MD5";
-    public bool MetaExists => MetaFileInfo.Exists;
+    public Task<bool> MetaExists => Task.FromResult(MetaFileInfo.Exists);
 
     public DateTime LastMetaUpdate => MetaFileInfo.LastWriteTimeUtc;
 
-    public IReadOnlyDocument GetDocument(CancellationToken cancellationToken) => documentResolver.GetNodeAtPath(Path, cancellationToken) as IReadOnlyDocument;
+    public async Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken) => (IReadOnlyDocument) (await documentResolver.GetNodeAtPath(Path, cancellationToken));
 
     public string ComputeMetaHash()
     {
         using var stream = MetaFileInfo.OpenRead();
-        return stream.ComputeMD5FromStream();
+        return stream.ComputeMD5FromStream(false);
     }
     
     public string ComputeDocHash()
     {
         using var stream = FileInfo.OpenRead();
-        return stream.ComputeMD5FromStream();
+        return stream.ComputeMD5FromStream(false);
     }
 }

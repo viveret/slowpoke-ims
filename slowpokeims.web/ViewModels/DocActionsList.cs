@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -32,11 +33,11 @@ public class DocActionsList
 
 public static class DocActionExtensions
 {
-    public static DocActionsList GetActions(this IReadOnlyNode node, IUrlHelper url, IServiceProvider services)
+    public static async Task<DocActionsList> GetActions(this IReadOnlyNode node, IUrlHelper url, IServiceProvider services)
     {
         if (node is IReadOnlyDocument doc)
         {
-            return doc.GetActions(url, services);
+            return await doc.GetActions(url, services);
         }
         else if (node is IReadOnlyFolder folder)
         {
@@ -48,9 +49,9 @@ public static class DocActionExtensions
         }
     }
 
-    public static DocActionsList GetActions(this IReadOnlyDocument doc, IUrlHelper url, IServiceProvider services)
+    public static async Task<DocActionsList> GetActions(this IReadOnlyDocument doc, IUrlHelper url, IServiceProvider services)
     {
-        return GetActions(doc, url, services, doc.ContentType);
+        return GetActions(doc, url, services, await doc.GetContentType());
     }
 
     public static DocActionsList GetActions(this IReadOnlyFolder doc, IUrlHelper url, IServiceProvider services)

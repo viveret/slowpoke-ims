@@ -36,7 +36,7 @@ public class QueryDocumentOptions
         ItemView = other.ItemView;
     }
 
-    public string Query { get; set; }
+    public string? Query { get; set; }
 
     public bool SearchDocContents { get; set; }
 
@@ -46,18 +46,18 @@ public class QueryDocumentOptions
 
     public bool IncludeFolders { get; set; }
     
-    public INodePath Folder { get; set; }
+    public INodePath? Folder { get; set; }
 
     // this is not able to handle string input binding, so need to write/add converter or new properties to do type conversions
-    public INodePath Path { get; set; }
+    public INodePath? Path { get; set; }
     
-    public string Name { get; set; }
+    public string? Name { get; set; }
     
-    public string Extension { get; set; }
+    public string? Extension { get; set; }
 
-    public string ExtensionsToIgnore { get; set; }
+    public string? ExtensionsToIgnore { get; set; }
     
-    public string ContentType { get; set; }
+    public string? ContentType { get; set; }
     
     public DateTime? CreationDateMin { get; set; }
     
@@ -77,7 +77,7 @@ public class QueryDocumentOptions
 
     public FileCategory[] CategoriesToIncludeOnly { get; set; } = CategoriesToIncludeOnlyDefault;
     
-    public FileCategory[] CategoriesToExclude { get; set; }
+    public FileCategory[] CategoriesToExclude { get; set; } = Array.Empty<FileCategory>();
 
     public bool? UseProjectDetection { get; set; } // if project folders / files should be grouped together 
 
@@ -85,7 +85,7 @@ public class QueryDocumentOptions
 
     public int PageSize { get; set; } = 10;
     
-    public string OrderByColumn { get; set; }
+    public string? OrderByColumn { get; set; }
     
     public bool OrderByAscending { get; set; }
 

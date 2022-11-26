@@ -1,7 +1,8 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Services;
 using slowpoke.core.Services.Node.Docs;
@@ -23,20 +24,31 @@ public class SlowPokeControllerBase: Controller
     public Config Config { get; }
 
     
-    protected (string, IReadOnlyNode, ActionResult) ValidateAndResolvePath(string path, CancellationToken cancellationToken)
+    public async Task<(string, IReadOnlyNode, ActionResult)> ValidateAndResolvePath(string path, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
             return (null, null, NotFound());
+            //throw new ArgumentOutOfRangeException(nameof(path));
         }
         
         path = Uri.UnescapeDataString(path);
-        var node = DocumentResolver.UnifiedReadable.CanRead.GetNodeAtPath(path.AsIDocPath(Config), cancellationToken);
-        if (node == null || !node.Exists)
-        {
-            return (path, null, NotFound());
-        }
 
-        return (path, node, null);
+        try
+        {
+            var asDocPath = path.AsIDocPath(Config);
+            var node = asDocPath != null ? await (await DocumentResolver.UnifiedReadable).CanRead.GetNodeAtPath(asDocPath, cancellationToken) : null;
+
+            if (node == null || !await node.Exists)
+            {
+                return (path, null, NotFound());
+            }
+
+            return (path, node, null);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return (path, null, BadRequest(ex.Message));
+        }
     }
 }

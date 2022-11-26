@@ -1,0 +1,16 @@
+@model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
+@{
+    var titleHref = Model.Parent.TitleUrlResolver(Model);
+    var titleViewName = $"Paginated/ReadOnlyNode/{ViewData["TitleSize"]}Title";
+    var subtitleViewName = $"Paginated/ReadOnly{ViewData["TitleNodeType"]}/SubTitle";
+    var iconHtml = ViewData["TitleIcon"] as string;
+}
+<div class="grid--item grid--col11 d-flex">
+    <div class="flex--item fl-grow1">
+        <a class="fw-bold" href="@titleHref">
+            @if (iconHtml != null) { @Html.Raw(iconHtml) }
+            <partial name="@titleViewName" />
+        </a>
+        <partial name="@subtitleViewName" />
+    </div>
+</div>

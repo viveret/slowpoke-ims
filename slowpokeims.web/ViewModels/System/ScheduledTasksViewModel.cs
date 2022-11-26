@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Services.Scheduled;
 
 namespace SlowPokeIMS.Web.ViewModels.System;

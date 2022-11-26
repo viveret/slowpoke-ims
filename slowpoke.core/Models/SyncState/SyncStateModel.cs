@@ -12,21 +12,53 @@ public enum SyncState
 
 public class SyncStateTaskProgress
 {
-    public string Title { get; set; }
+    public SyncStateTaskProgress()
+    {
+    }
+
+    public SyncStateTaskProgress(SyncStateTaskProgress other)
+    {
+        Title = other.Title;
+        Subtitle = other.Subtitle;
+        ProgressMax = other.ProgressMax;
+        ProgressValue = other.ProgressValue;
+    }
+
+    public string Title { get; set; } = string.Empty;
     
-    public string Subtitle { get; set; }
+    public string Subtitle { get; set; } = string.Empty;
 
     public long ProgressMax { get; set; }
     
     public long ProgressValue { get; set; }
 
-    public List<SyncStateTaskProgress> ChildTasks { get; set; }
+    public IEnumerable<SyncStateTaskProgress> ChildTasks { get; set; } = Enumerable.Empty<SyncStateTaskProgress>();
     
-    public SyncStateTaskProgress ParentTask { get; set; }
+    public SyncStateTaskProgress? ParentTask { get; set; }
+
+
+    public SyncStateTaskProgress Copy() => new SyncStateTaskProgress(this);
 }
 
 public class SyncStateModel
 {
+    public SyncStateModel()
+    {
+
+    }
+
+    public SyncStateModel(SyncStateModel other)
+    {
+        this.HasChangesToSend = other.HasChangesToSend;
+        this.HasSentPublishedChanges = other.HasSentPublishedChanges;
+        this.LastTimeSentPublishedChanges = other.LastTimeSentPublishedChanges;
+        this.IsUpToDateWithPolledChanges = other.IsUpToDateWithPolledChanges;
+        this.LastTimePolledForChanges = other.LastTimePolledForChanges;
+        this.LastTimeStateChanged = other.LastTimeStateChanged;
+        this.Error = other.Error;
+        this.Progress = other.Progress?.Copy();
+    }
+
     public bool HasChangesToSend { get; set; }
 
     public bool HasSentPublishedChanges { get; set; }
@@ -76,7 +108,9 @@ public class SyncStateModel
 
     public DateTime LastTimeStateChanged { get; set; }
 
-    public Exception Error { get; set; }
+    public Exception? Error { get; set; }
 
-    public SyncStateTaskProgress Progress { get; set; }    
+    public SyncStateTaskProgress? Progress { get; set; }
+
+    public virtual SyncStateModel Copy() => new SyncStateModel(this);
 }

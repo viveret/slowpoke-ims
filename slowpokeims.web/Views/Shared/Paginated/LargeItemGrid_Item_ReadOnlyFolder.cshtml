@@ -1,37 +1,15 @@
 @model SlowPokeIMS.Web.ViewModels.IReadOnlyNodeViewModel
 @{
-    var meta = Model.Folder.HasMeta ? Model.Folder.Meta : null;
-    var title = meta?.Title;
     var classSize = (ViewData["classSize"] as string) ?? "";
-    var badgeClass = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+    ViewData["badgeClass"] = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+    ViewData["TitleSize"] = "Large";
+    ViewData["TitleNodeType"] = "Folder";
+    ViewData["TitleIcon"] = Config.Style.FolderIcon;
 }
 <div class="s-card">
     <div class="d-grid grid__12 g8">
-        <div class="grid--item grid--col11">
-            <a class="fw-bold" href="@Url.Action("Details", "Home", new { path = @Model.Folder.Path.PathValue })">
-                &#x1F4C1;
-                @if (string.IsNullOrWhiteSpace(title))
-                {
-                    <h4 class="fs-body2">@Model.Folder.Path</h4>
-                }
-                else
-                {
-                    <h4 class="fs-body2">@title</h4>
-                    <div class="fs-body1">@Model.Folder.Path</div>
-                }
-            </a>
-            <partial name="Paginated/ReadOnlyFolder/SubTitle" />
-        </div>
-        <partial name="DocActionsDropdown" />
-        <div class="grid--item grid--col12 d-flex fw-wrap g4">
-            @if (meta == null)
-            {
-                <span class="@badgeClass s-badge__danger">Does not have meta file</span>
-            }
-            else
-            {
-                @Html.DisplayFor(m => meta)
-            }
-        </div>
+        <partial name="NodeHeader" />
+        <partial name="NodeActionsDropdown" />
+        <partial name="NodeMeta" />
     </div>
 </div>

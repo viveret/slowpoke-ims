@@ -11,37 +11,37 @@ public interface IReadOnlyDocumentResolver
     
     string ResolverTypeName { get; }
 
-    ISlowPokeHost Host { get; }
+    Task<ISlowPokeHost> Host { get; }
 
-    bool CanSync { get; }
+    Task<bool> CanSync { get; }
     
-    NodePermissionCategories<bool> Permissions { get; }
+    Task<NodePermissionCategories<bool>> Permissions { get; }
 
-    IReadOnlyNode GetNodeAtPath(INodePath path, CancellationToken cancellationToken);
+    Task<IReadOnlyNode> GetNodeAtPath(INodePath path, CancellationToken cancellationToken);
 
-    IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);
-    
-    bool HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
+    Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);
 
-    bool NodeExistsAtPath(INodePath path, CancellationToken cancellationToken);
-    
-    int GetCountOfNodes(CancellationToken cancellationToken);
-    
-    int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken);
-    
-    IEnumerable<IReadOnlyNode> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken);
+    Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
 
-    int GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken);
+    Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken);
     
-    IEnumerable<IReadOnlyNode> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken);
+    Task<int> GetCountOfNodes(CancellationToken cancellationToken);
+    
+    Task<int> GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken);
+    
+    Task<IEnumerable<IReadOnlyNode>> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken);
 
-    IEnumerable<INodePath> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
+    Task<int> GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken);
     
-    int GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
+    Task<IEnumerable<IReadOnlyNode>> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken);
 
-    string GetExtensionFromContentType(string contentType);
+    Task<IEnumerable<INodePath>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
     
-    string GetContentTypeFromExtension(string extension);
+    Task<int> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
+
+    Task<string> GetExtensionFromContentType(string contentType);
     
-    IEnumerable<INodeFingerprint> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken);
+    Task<string> GetContentTypeFromExtension(string extension);
+    
+    Task<IEnumerable<INodeFingerprint>> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken);
 }

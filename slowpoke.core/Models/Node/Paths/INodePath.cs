@@ -1,7 +1,7 @@
 namespace slowpoke.core.Models.Node.Docs;
 
 
-public interface INodePath
+public interface INodePath: IEquatable<INodePath>
 {
     string PathValue { get; }
 

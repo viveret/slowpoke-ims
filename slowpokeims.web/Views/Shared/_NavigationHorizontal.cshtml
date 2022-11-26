@@ -1,9 +1,8 @@
 @inject slowpoke.core.Services.ISyncStateManager SyncStateManager
-@inject slowpoke.core.Models.Config.Config Config
 <a href="/" class="flex--item s-topbar--logo">
     <!-- https://bulbapedia.bulbagarden.net/wiki/Slowpoke_(Pok%C3%A9mon) -->
-    <img src="@Config.System.TitleLogoSrc" width="@Config.System.TitleLogoWidth" style="@Config.System.TitleLogoStyle">
-    <span class="@Config.System.TitleClass">@Config.System.Title</span>
+    <img src="@Config.Style.TitleLogoSrc" width="@Config.Style.TitleLogoWidth" style="@Config.Style.TitleLogoStyle">
+    <span class="@Config.Style.TitleClass">@Config.System.Title</span>
 </a>
 <ul class="s-navigation mx8 fw-nowrap">
     @{ ViewData["isHorizontal"] = "true"; }

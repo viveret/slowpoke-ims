@@ -1,9 +1,11 @@
+using slowpoke.core.Models.Configuration;
+
 namespace slowpoke.core.Models.Node.Docs;
 
 
 public class DocPathRelative : DocPathBase
 {
-    public DocPathRelative(string pathValue, Config.Config config) : base(pathValue, config)
+    public DocPathRelative(string pathValue, Config config) : base(pathValue, config)
     {
     }
 

@@ -1,12 +1,13 @@
 using System.Text;
+using SlowPokeIMS.Core.Collections;
 
 namespace slowpoke.core.Models.Node.Docs;
 
-public interface IReadOnlyDocument: IReadOnlyNode, IEquatable<IReadOnlyDocument>, IComparable<IReadOnlyDocument>
+public interface IReadOnlyDocument: IReadOnlyNode, IAsyncEquatable<IReadOnlyDocument>, IAsyncComparable<IReadOnlyDocument>
 {
-    string ContentType { get; }
+    Task<string> GetContentType();
 
-    Stream OpenRead();
+    Task<Stream> OpenRead();
 
-    string ReadAllText(Encoding encoding, int numLines = 0);
+    Task<string> ReadAllText(Encoding encoding, int numLines = 0);
 }

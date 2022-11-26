@@ -7,29 +7,29 @@ namespace slowpoke.core.Models.Node.Docs.ReadOnlyLocal;
 
 public class ReadOnlyFolder : ReadOnlyNode, IReadOnlyFolder
 {
-    public override bool Exists => Directory.Exists(this.Path.ConvertToAbsolutePath().PathValue);
+    public override Task<bool> Exists => Task.FromResult(Directory.Exists(this.Path.ConvertToAbsolutePath().PathValue));
 
-    public override long SizeBytes => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Sum(f => OnUnauthorizedReturn0(() => new FileInfo(f).Length))) : 0L;
+    public override Task<long> SizeBytes => Task.FromResult(Permissions.Result.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Sum(f => OnUnauthorizedReturn0(() => new FileInfo(f).Length))) : 0L);
 
-    public int SizeFiles => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
+    public int SizeFiles => Permissions.Result.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateFiles(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
 
-    public int SizeFolders => Permissions.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateDirectories(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
+    public int SizeFolders => Permissions.Result.CanRead ? OnUnauthorizedReturn0(() => Directory.EnumerateDirectories(this.Path.ConvertToAbsolutePath().PathValue).Count()) : 0;
 
-    public override NodePermissionCategories<bool> Permissions
+    public override Task<NodePermissionCategories<bool>> Permissions
     {
         get
         {
-            return new NodePermissionCategories<bool>
+            return Task.FromResult(new NodePermissionCategories<bool>
             {
-                CanRead = Exists && new DirectoryInfo(this.Path.ConvertToAbsolutePath().PathValue).CreationTime != null,
-                CanWrite = Exists && new DirectoryInfo(this.Path.ConvertToAbsolutePath().PathValue).CreationTime != null,
+                CanRead = Exists.Result && new DirectoryInfo(this.Path.ConvertToAbsolutePath().PathValue).CreationTime != null,
+                CanWrite = Exists.Result && new DirectoryInfo(this.Path.ConvertToAbsolutePath().PathValue).CreationTime != null,
                 IsEncrypted = false,
                 LimitedToUserOnly = false,
                 LimitedToMachineOnly = true,
                 LimitedToAllowedConnectionsOnly = false,
                 LimitedToLocalNetworkOnly = false,
                 UnlimitedUniversalPublicAccess = false,
-            };
+            });
         }
     }
 
@@ -46,48 +46,49 @@ public class ReadOnlyFolder : ReadOnlyNode, IReadOnlyFolder
 
     public bool Equals(IReadOnlyFolder? other) => CompareTo(other) == 0;
 
-    public override void Sync(CancellationToken cancellationToken)
+    public override Task Sync(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override void BroadcastChanges(CancellationToken cancellationToken)
+    public override Task BroadcastChanges(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override void PollForChanges(CancellationToken cancellationToken)
+    public override Task PollForChanges(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override void TurnOnSync(CancellationToken cancellationToken)
+    public override Task TurnOnSync(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override void TurnOffSync(CancellationToken cancellationToken)
+    public override Task TurnOffSync(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override string ComputeHash()
+    public override Task<string> ComputeHash()
     {
         throw new NotImplementedException();
     }
 
-    public override void MergeChanges(CancellationToken cancellationToken)
+    public override Task MergeChanges(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override IEnumerable<INodeDiffBrief> FetchChanges(CancellationToken cancellationToken)
+    public override Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override INodeFingerprint GetFingerprint(CancellationToken cancellationToken)
+    public override async Task<INodeFingerprint> GetFingerprint(CancellationToken cancellationToken)
     {
-        return new NodeFingerprintModel(Path, ComputeHash(), Meta.LastUpdate, Meta.ComputeMetaHash(), Meta.LastMetaUpdate);
+        var meta = await Meta;
+        return new NodeFingerprintModel(Path, await ComputeHash(), meta.LastUpdate, meta.ComputeMetaHash(), meta.LastMetaUpdate);
     }
 }

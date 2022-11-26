@@ -1,5 +1,16 @@
 @model DetailsViewModel
+@{
+    ViewData["Title"] = "Document Details";
+}
 @section Scripts {
     <script src="~/js/Home/index.js"></script>
 }
-@Html.DisplayFor(m => m.Document)
+@if (Model.Document != null)
+{
+    <p>Document type: @Model.Document.GetType().FullName</p>
+    @Html.DisplayFor(m => m.Document)
+}
+else
+{
+    <p>Document not found</p>
+}

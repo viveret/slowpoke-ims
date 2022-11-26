@@ -4,11 +4,22 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>SlowPokeIMS.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="1.9.0" />
+    <PackageReference Include="graphiql" Version="2.0.0" />
     <PackageReference Include="GraphQL" Version="7.1.1" />
+    <PackageReference Include="GraphQL.DataLoader" Version="7.1.1" />
+    <PackageReference Include="GraphQL.MemoryCache" Version="7.1.1" />
+    <PackageReference Include="GraphQL.MicrosoftDI" Version="7.1.1" />
+    <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
+    <PackageReference Include="GraphQL.SystemTextJson" Version="7.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.TagHelpers" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
   </ItemGroup>
 

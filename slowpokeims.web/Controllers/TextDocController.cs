@@ -1,60 +1,52 @@
 using System;
-using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node.Docs;
-using slowpoke.core.Services;
 using slowpoke.core.Services.Node.Docs;
-using SlowPokeIMS.Web.Controllers;
 using SlowPokeIMS.Web.Controllers.Attributes;
 using SlowPokeIMS.Web.ViewModels.TextDoc;
 
 namespace SlowPokeIMS.Web.Controllers;
 
 [DocController("text", "text/*", "text/markdown")]
-public class TextDocController: Controller
+public class TextDocController: SlowPokeControllerBase
 {
-    public IDocumentProviderResolver DocumentProviderResolver { get; }
-    public Config Config { get; }
-
-    public TextDocController(IDocumentProviderResolver documentProviderResolver, Config config)
+    public TextDocController(IDocumentProviderResolver documentProviderResolver, Config config): base(documentProviderResolver, config)
     {
-        DocumentProviderResolver = documentProviderResolver;
-        Config = config;
     }
 
     [DocAction, HttpGet("text/edit/{path}")]
-    public ActionResult Edit(string path, CancellationToken cancellationToken)
+    public async Task<ActionResult> Edit(string path, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        var pathResult = await ValidateAndResolvePath(path, cancellationToken);
+        if (pathResult.Item3 != null)
+        {
+            return pathResult.Item3;
+        }
+        
+        var node = await (await DocumentResolver.UnifiedReadable).CanRead.GetNodeAtPath(pathResult.Item1.AsIDocPath(Config), cancellationToken);
+        if (node == null || !await node.Exists || !(node is IReadOnlyDocument doc))
         {
             return NotFound();
         }
         
-        path = Uri.UnescapeDataString(path);
-        var node = DocumentProviderResolver.UnifiedReadable.CanRead.GetNodeAtPath(path.AsIDocPath(Config), cancellationToken);
-        if (node == null || !node.Exists || !(node is IReadOnlyDocument doc))
-        {
-            return NotFound();
-        }
-        
-        return View(new NewTextNoteViewModel { path = path, Value = doc.ReadAllText(Encoding.Unicode) });
+        return View(new NewTextNoteViewModel { path = pathResult.Item1, Value = await doc.ReadAllText(Encoding.Unicode) });
     }
 
     [HttpPost("text/edit/{path}")]
-    public ActionResult Edit(string path, string Value, CancellationToken cancellationToken)
+    public async Task<ActionResult> Edit(string path, string Value, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        var pathResult = await ValidateAndResolvePath(path, cancellationToken);
+        if (pathResult.Item3 != null)
         {
-            return NotFound();
+            return pathResult.Item3;
         }
-        
-        path = Uri.UnescapeDataString(path);
 
-        var doc = DocumentProviderResolver.UnifiedWritable.CanWrite.GetNodeAtPath(path.AsIDocPath(Config), cancellationToken);
-        if (doc == null || !doc.Exists)
+        var doc = await (await DocumentResolver.UnifiedWritable).CanWrite.GetNodeAtPath(pathResult.Item1.AsIDocPath(Config), cancellationToken);
+        if (doc == null || !await doc.Exists)
         {
             return NotFound();
         }
@@ -73,7 +65,7 @@ public class TextDocController: Controller
             }
 
             // file is being used by another process
-            writableDoc.WriteIfChanged(s => {
+            await writableDoc.WriteIfChanged(s => {
                 s.Write(System.Text.Encoding.Unicode.GetBytes(Value));
             }, cancellationToken);
         }
@@ -85,11 +77,11 @@ public class TextDocController: Controller
 
         if (ModelState.IsValid)
         {
-            return RedirectToAction(nameof(HomeController.Details), "Home", new { path });
+            return RedirectToAction(nameof(HomeController.Details), "Home", new { path = pathResult.Item1 });
         }
         else
         {
-            return View(new NewTextNoteViewModel { path = path, Value = Value, ContentType = DocumentProviderResolver.UnifiedReadable.CanRead.GetContentTypeFromExtension(path.GetFullExtension()) });
+            return View(new NewTextNoteViewModel { path = pathResult.Item1, Value = Value, ContentType = await (await DocumentResolver.UnifiedReadable).CanRead.GetContentTypeFromExtension(pathResult.Item1.GetFullExtension()) });
         }
     }
 
@@ -97,14 +89,14 @@ public class TextDocController: Controller
     public ActionResult NewTextNote() => View(new NewTextNoteViewModel());
 
     [HttpPost("text/new")]
-    public ActionResult NewTextNote(string Value, string ContentType, CancellationToken cancellationToken)
+    public async Task<ActionResult> NewTextNote(string Value, string ContentType, CancellationToken cancellationToken)
     {
         try
         {
-            var rw = DocumentProviderResolver.UnifiedWritable.CanWrite;
-            var doc = rw.NewDocument(new NewDocumentOptions { contentType = ContentType }, cancellationToken);
+            var rw = (await DocumentResolver.UnifiedWritable).CanWrite;
+            var doc = await rw.NewDocument(new NewDocumentOptions { contentType = ContentType }, cancellationToken);
 
-            doc.WriteIfChanged(stream => stream.Write(System.Text.Encoding.UTF8.GetBytes(Value)), cancellationToken);
+            await doc.WriteIfChanged(stream => stream.Write(System.Text.Encoding.UTF8.GetBytes(Value)), cancellationToken);
 
             return RedirectToAction(nameof(HomeController.Index), "Home", new { path = doc.Path.PathValue });
         }

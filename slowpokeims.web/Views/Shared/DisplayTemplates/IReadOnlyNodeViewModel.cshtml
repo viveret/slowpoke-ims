@@ -1,0 +1,9 @@
+@using slowpoke.core.Models.Node.Docs
+@model IReadOnlyNodeViewModel
+@if (Model.Model is IReadOnlyDocument doc) {
+    @Html.DisplayFor(m => doc)
+}
+else
+{
+    @Html.DisplayFor(m => m.Folder)
+}

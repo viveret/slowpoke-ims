@@ -25,104 +25,99 @@ public class ReadOnlyLocalDriveDocumentProvider : IReadOnlyDocumentResolver
 
     public string ResolverTypeName => GetType().Name;
 
-    public ISlowPokeHost Host => DocumentProviderResolver.Host;
+    public Task<ISlowPokeHost> Host => DocumentProviderResolver.Host;
 
-    public NodePermissionCategories<bool> Permissions
+    public Task<NodePermissionCategories<bool>> Permissions
     {
         get
         {
-            return new NodePermissionCategories<bool> { };
+            return Task.FromResult(new NodePermissionCategories<bool> { });
         }
     }
 
-    public bool CanSync => false;
+    public Task<bool> CanSync => Task.FromResult(false);
 
-    public bool NodeExistsAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public string GetContentTypeFromExtension(string extension)
+    public Task<string> GetContentTypeFromExtension(string extension)
     {
         throw new NotImplementedException();
     }
 
-    public int GetCountOfNodes(CancellationToken cancellationToken)
+    public Task<int> GetCountOfNodes(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public int GetCountOfDocuments(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<int> GetCountOfDocuments(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken)
+    public Task<int> GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public int GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<int> GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IReadOnlyDocument GetNodeAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task<IReadOnlyNode> GetNodeAtPath(INodePath path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IReadOnlyDocument> GetDocuments(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<IEnumerable<IReadOnlyDocument>> GetDocuments(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IReadOnlyDocument> GetDocumentsInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken)
+    public Task<IEnumerable<IReadOnlyDocument>> GetDocumentsInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public string GetExtensionFromContentType(string contentType)
+    public Task<string> GetExtensionFromContentType(string contentType)
     {
         throw new NotImplementedException();
     }
 
-    public bool HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)
+    public Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    IReadOnlyNode IReadOnlyDocumentResolver.GetNodeAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken)
+    public Task<IEnumerable<IReadOnlyNode>> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IReadOnlyNode> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken)
+    public Task<IEnumerable<IReadOnlyNode>> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IReadOnlyNode> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<IEnumerable<INodePath>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<INodePath> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<int> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public int GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IEnumerable<INodeFingerprint> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken)
+    public Task<IEnumerable<INodeFingerprint>> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

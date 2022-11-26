@@ -5,7 +5,7 @@ namespace slowpoke.core.Models.Diff;
 
 public interface INodeDiff: INodeDiffBrief
 {
-    public IReadOnlyDocument Old { get; }
+    public IReadOnlyDocument OldDoc { get; }
     
-    public IReadOnlyDocument New { get; }
+    public IReadOnlyDocument NewDoc { get; }
 }

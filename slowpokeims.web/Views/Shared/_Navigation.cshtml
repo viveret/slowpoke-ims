@@ -12,9 +12,8 @@
     var currentControllerName = controllerActionDescriptor.ControllerName;
     var currentActionName = controllerActionDescriptor.ActionName;
     var isNullSelected = currentActionName == null || currentControllerName == null;
-    var assembly = assemblyAccessor.Value;
-    var controllerTypes = assembly
-                .GetTypes().Where(t => t.IsSubclassOf(typeof(Controller))).ToList();
+    var assemblyTypes = assemblyAccessor.Value.SelectMany(asm => asm.GetTypes());
+    var controllerTypes = assemblyTypes.Where(t => t.IsSubclassOf(typeof(Controller))).ToList();
 }
 @foreach (var controllerType in controllerTypes)
 {

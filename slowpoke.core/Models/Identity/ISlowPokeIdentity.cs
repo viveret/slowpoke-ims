@@ -2,6 +2,8 @@ namespace slowpoke.core.Models.Identity;
 
 public interface ISlowPokeIdentity
 {
+    bool Exists { get; }
+    
     Guid IdentityGuid { get; }
     
     Guid AuthGuid { get; }

@@ -5,7 +5,9 @@ namespace slowpoke.core.Models.Diff;
 
 public class NodeDiffBrief : INodeDiffBrief
 {
-    public NodeDiffBrief(IReadOnlyNode old, IReadOnlyNode @new, CancellationToken cancellationToken): this(old?.GetFingerprint(cancellationToken), @new?.GetFingerprint(cancellationToken))
+    public NodeDiffBrief(
+        INodeFingerprint oldFingerprint, INodeFingerprint newFingerprint,
+        IReadOnlyNode old, IReadOnlyNode @new): this(oldFingerprint, newFingerprint)
     {
         if (old is IReadOnlyDocument document)
         {
@@ -39,6 +41,14 @@ public class NodeDiffBrief : INodeDiffBrief
         HasMetaChanged = Old.MetaHash != New.MetaHash || Old.MetaLastChangeDate < New.MetaLastChangeDate;
         HasPathChanged = Old.Path != New.Path;
         HasChanged = HasPathChanged || HasContentChanged || HasMetaChanged;
+    }
+
+    public static async Task<NodeDiffBrief> Create(IReadOnlyNode old, IReadOnlyNode @new, CancellationToken cancellationToken)
+    {
+        return new NodeDiffBrief(
+            await old!.GetFingerprint(cancellationToken),
+            await @new!.GetFingerprint(cancellationToken),
+            old, @new);
     }
 
     public bool HasChanged { get; }

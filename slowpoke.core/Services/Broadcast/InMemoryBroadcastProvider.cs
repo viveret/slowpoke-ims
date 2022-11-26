@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text;
 using slowpoke.core.Models.Broadcast;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Util;
+using SlowPokeIMS.Core.Services.Broadcast;
 
 namespace slowpoke.core.Services.Broadcast;
 
@@ -10,9 +11,10 @@ namespace slowpoke.core.Services.Broadcast;
 
 public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
 {
-    public InMemoryBroadcastProvider(Config config)
+    public InMemoryBroadcastProvider(Config config, IEnumerable<IBroadcastLogger> loggers)
     {
         Config = config;
+        Loggers = loggers;
     }
 
     private static ConcurrentDictionary<Guid, IBroadcastMessage> CachedSentPublishedMessages { get; } = new ConcurrentDictionary<Guid, IBroadcastMessage>();
@@ -31,16 +33,18 @@ public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
     public List<IBroadcastMessage> ReceivedMessages => CachedReceivedMessages.ToList();
 
     public Config Config { get; }
+    
+    public IEnumerable<IBroadcastLogger> Loggers { get; }
 
-    public void Publish(IBroadcastMessage message, CancellationToken cancellationToken)
+    public Task Publish(IBroadcastMessage message, CancellationToken cancellationToken)
     {
         CachedUnsentPublishedMessages.Enqueue(message);
         PersistPublishedMessages[message.EventGuid] = message;
 
-        WritePersistMessages(PersistPublishedMessages.Values.ToList(), cancellationToken);
+        return WritePersistMessages(PersistPublishedMessages.Values.ToList(), cancellationToken);
     }
 
-    public void SendUnsentMessages(Action<IBroadcastMessage> send)
+    public Task SendUnsentMessages(Action<IBroadcastMessage> send)
     {
         var ignoreFeedback = new List<Guid>();
         while (!CachedUnsentPublishedMessages.IsEmpty && CachedUnsentPublishedMessages.TryDequeue(out var msg))
@@ -56,61 +60,67 @@ public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
             send(msg);
             CachedSentPublishedMessages[msg.EventGuid] = msg;
         }
+        return Task.CompletedTask;
     }
 
-    public void WritePersistMessages(List<IBroadcastMessage> msgs, CancellationToken cancellationToken)
+    public Task WritePersistMessages(List<IBroadcastMessage> msgs, CancellationToken cancellationToken)
     {
         var msgsProcessed = new List<IBroadcastMessage>();
-        var f = new FileInfo(Path.Combine(Config.Paths.AppRootPath, "broadcast-sent-messages.csv"));
-        using var destination = f.Open(FileMode.Append);
+
         foreach (var msg in msgs)
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
 
-            var msgStr = msg.ConvertToRaw().ToString();
-            destination.Write(Encoding.ASCII.GetBytes(msgStr!));
-            destination.WriteByte((byte)'\n');
-            destination.Flush();
+            foreach (var log in Loggers)
+            {
+                log.Log(msg);
+            }
+
             msgsProcessed.Add(msg);
         }
+        return Task.CompletedTask;
     }
 
-    public IEnumerable<IBroadcastMessage> ReadPersistedSentMessages(CancellationToken cancellationToken = default)
+    public Task<IEnumerable<IBroadcastMessage>> ReadPersistedSentMessages(CancellationToken cancellationToken = default)
     {
         return ReadMessagesFromTextFile("broadcast-sent-messages.csv");
     }
 
-    public IEnumerable<IBroadcastMessage> ReadPersistedReceivedMessages(CancellationToken cancellationToken = default)
+    public Task<IEnumerable<IBroadcastMessage>> ReadPersistedReceivedMessages(CancellationToken cancellationToken = default)
     {
         return ReadMessagesFromTextFile("broadcast-received-messages.csv");
     }
     
-    public IEnumerable<IBroadcastMessage> ReadMessagesFromTextFile(string filePath, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<IBroadcastMessage>> ReadMessagesFromTextFile(string filePath, CancellationToken cancellationToken = default)
     {
         var f = new FileInfo(Path.Combine(Config.Paths.AppRootPath, filePath));
         if (!f.Exists)
         {
-            yield break;
+            return Task.FromResult(Enumerable.Empty<IBroadcastMessage>());
         }
 
         using var sr = new StreamReader(f.OpenRead());
+        var ret = new List<IBroadcastMessage>();
         while(!sr.EndOfStream)
         {
             var line = sr.ReadLine();
             if (string.IsNullOrWhiteSpace(line))
                 continue;
-            yield return BroadcastMessageRaw.Parse(line).ConvertToTrueType();
+            
+            ret.Add(BroadcastMessageRaw.Parse(line).ConvertToTrueType());
         }
+
+        return Task.FromResult<IEnumerable<IBroadcastMessage>>(ret);
     }
     
-    public IEnumerable<IBroadcastMessage> Receive(Guid lastEventReceived, CancellationToken cancellationToken)
+    public async Task<IEnumerable<IBroadcastMessage>> Receive(Guid lastEventReceived, CancellationToken cancellationToken)
     {
-        var idsToReturn = GetCachedReceivedSince(lastEventReceived);
+        var idsToReturn = await GetCachedReceivedSince(lastEventReceived);
         return idsToReturn.OrderBy(m => m.BroadcastReceiveDate).ToList();
     }
 
-    private IEnumerable<IBroadcastMessage> GetCachedReceivedSince(Guid lastEventReceived)
+    private Task<IEnumerable<IBroadcastMessage>> GetCachedReceivedSince(Guid lastEventReceived)
     {
         var idsToDate = CachedReceivedMessages;
         var list = (IEnumerable<IBroadcastMessage>) idsToDate;
@@ -119,10 +129,10 @@ public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
         if (lastEventReceived != Guid.Empty)
             list = list.SkipWhile(v => v.EventGuid != lastEventReceived);
         
-        return list.ToList();
+        return Task.FromResult<IEnumerable<IBroadcastMessage>>(list.ToList());
     }
 
-    public void ExportToStream(Stream destination, bool isTextStream)
+    public Task ExportToStream(Stream destination, bool isTextStream)
     {
         if (isTextStream)
         {
@@ -144,9 +154,11 @@ public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
                 destination.WriteByte((byte)'\n');
             }
         }
+
+        return Task.CompletedTask;
     }
 
-    public void ImportFromStream(Stream source, bool isTextStream)
+    public Task ImportFromStream(Stream source, bool isTextStream)
     {
         foreach (var src in new [] {
             (nameof(this.ReceivedMessages), this.ReceivedMessages),
@@ -165,13 +177,16 @@ public class InMemoryBroadcastProvider: IInMemoryBroadcastProvider
                 destination.WriteByte((byte)'\n');
             }*/
         }
+
+        return Task.CompletedTask;
     }
 
-    public void AddReceivedMessages(IEnumerable<IBroadcastMessage> messages)
+    public Task AddReceivedMessages(IEnumerable<IBroadcastMessage> messages)
     {
         foreach (var msg in messages)
         {
             CachedReceivedMessages.Enqueue(msg);
         }
+        return Task.CompletedTask;
     }
 }

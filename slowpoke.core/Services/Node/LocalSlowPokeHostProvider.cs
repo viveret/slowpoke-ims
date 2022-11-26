@@ -1,45 +1,27 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using slowpoke.core.Client;
-using slowpoke.core.Models;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Node;
 using slowpoke.core.Services.Http;
 using slowpoke.core.Services.Identity;
-using slowpoke.core.Services.Node.Docs;
 
 namespace slowpoke.core.Services.Node;
 
 
-public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
-{
-    public IEnumerable<ISlowPokeHost> All { get; }
-    
-    public IEnumerable<ISlowPokeHost> AllExceptCurrent { get; }
-    
-    public Config Config { get; }
-    
-    public IIdentityAuthenticationService IdentityAuthenticationService { get; }
-    
+public class LocalSlowPokeHostProvider: SlowPokeHostProviderBase
+{    
     public IIpAddressHistoryService IpAddressHistoryService { get; }
-
-    // IdentityAuthenticationService.TrustedIdentities.Where(identity => IpAddressHistoryService.GetHistory(CancellationToken.None).Contains(e => e.AuthGuid == identity.AuthGuid))
-
-    public IEnumerable<ISlowPokeHost> Trusted => Config.P2P.TrustedHosts.Select(h => new SlowPokeHostModel { Endpoint = new Uri(h) }).ToList();
-
-    public IEnumerable<ISlowPokeHost> KnownButUntrusted => Config.P2P.KnownButUntrustedHosts.Select(h => new SlowPokeHostModel { Endpoint = new Uri(h) }).ToList();
 
     public LocalSlowPokeHostProvider(
         Config config,
         IIdentityAuthenticationService identityAuthenticationService,
-        IIpAddressHistoryService ipAddressHistoryService)
+        IIpAddressHistoryService ipAddressHistoryService): base(config, identityAuthenticationService)
     {
-        Config = config;
-        IdentityAuthenticationService = identityAuthenticationService;
         IpAddressHistoryService = ipAddressHistoryService;
     }
     
-    public ISlowPokeHost Current
+    public override ISlowPokeHost Current
     {
         get
         {
@@ -55,14 +37,14 @@ public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
         }
     }
 
-    public SearchForLocalNetworkHostsResult SearchForLocalNetworkHosts(ILogger logger, CancellationToken cancellationToken)
+    public override async Task<SearchForLocalNetworkHostsResult> SearchForLocalNetworkHosts(ILogger logger, CancellationToken cancellationToken)
     {
         var iteratorResults = new IteratorResults();
         IPAddress? localIp = GetLocalIp();
 
         return new SearchForLocalNetworkHostsResult
         {
-            Hosts = IterateLocalNetworkHosts(localIp, iteratorResults, logger, cancellationToken).ToList(),
+            Hosts = (await IterateLocalNetworkHosts(localIp, iteratorResults, logger, cancellationToken)).ToList(),
         };
     }
 
@@ -73,17 +55,20 @@ public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
         return localIp;
     }
 
-    private IEnumerable<ISlowPokeHost> IterateLocalNetworkHosts(IPAddress? localIp, IteratorResults iteratorResults, ILogger logger, CancellationToken cancellationToken)
+    private async Task<IEnumerable<ISlowPokeHost>> IterateLocalNetworkHosts(IPAddress? localIp, IteratorResults iteratorResults, ILogger logger, CancellationToken cancellationToken)
     {
         var localIpStr = localIp?.ToString();
         var hasLocalIp = !string.IsNullOrWhiteSpace(localIpStr);
 
         // first one is this one
-        yield return new SlowPokeHost(new HttpSlowPokeClient(new Uri($"https://{(hasLocalIp ? localIpStr : "localhost")}"), Config), this);
+        var ret = new List<ISlowPokeHost>();
+        var uri = new Uri($"https://{(hasLocalIp ? localIpStr : "localhost")}");
+        var client = await OpenClient(uri, cancellationToken: cancellationToken);
+        ret.Add(await SlowPokeHost.Resolve(client, this));
 
         if (!Config.P2P.AllowSearchForLocalNetworkHosts || !hasLocalIp)
         {
-            yield break;
+            return ret;
         }
 
         var ipBase = string.Join(".", localIp.GetAddressBytes().Select(b => b.ToString()).Take(3)) + ".";
@@ -100,7 +85,7 @@ public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
             if (cancellationToken.IsCancellationRequested)
             {
                 logger.LogInformation($"Task cancelled");
-                yield break;
+                return ret;
             }
 
             var timeoutSrc = new CancellationTokenSource(500);
@@ -108,11 +93,11 @@ public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
             logger.LogInformation($"Trying {ip}");
 
             var ping = false;
-            ISlowPokeClient resolver = null;
+            ISlowPokeClient? resolver = null;
             try
             {
-                resolver = HttpSlowPokeClient.Connect($"https://{ip}", Config);
-                ping = resolver.Ping(timeoutSrc.Token);
+                resolver = await OpenClient(new Uri($"https://{ip}"), cancellationToken: cancellationToken);
+                ping = await resolver.Ping(timeoutSrc.Token);
                 iteratorResults.noExceptionCount++;
             }
             catch (HttpRequestException e)
@@ -129,21 +114,36 @@ public class LocalSlowPokeHostProvider: ISlowPokeHostProvider
             if (ping && resolver != null)
             {
                 iteratorResults.successCount++;
-                var host = new SlowPokeHost(resolver, this);
+                var host = await SlowPokeHost.Resolve(resolver, this);
                 logger.LogInformation($"Successful response from {ip} (label = {host.Label}, guid = {host.Guid})");
 
-                yield return host;
+                ret.Add(host);
             }
             else
             {
                 iteratorResults.softFailCount++;
             }
         }
+
+        return ret;
     }
 
-    public void AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken)
+    public override Task AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken)
     {
         var newHostEndpoints = hosts.Select(h => h.Endpoint.ToString());
-        Config.P2P.KnownButUntrustedHosts = Config.P2P.KnownButUntrustedHosts.Concat(newHostEndpoints).ToArray();
+        Config.P2P.KnownButUntrustedHosts = Config.P2P.KnownButUntrustedHosts.Concat(newHostEndpoints).ToList();
+        Config.Save(cancellationToken);
+
+        return Task.CompletedTask;
+    }
+
+    public override Task<ISlowPokeClient> OpenClient(ISlowPokeHost host, CancellationToken cancellationToken)
+    {
+        return HttpSlowPokeClient.CreateClient(host.Endpoint, Config, cancellationToken: cancellationToken);
+    }
+
+    public override Task<ISlowPokeHost> GetHost(Uri location, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<ISlowPokeHost>(new SlowPokeHostModel { Endpoint = location });
     }
 }

@@ -1,4 +1,4 @@
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 
 namespace SlowPokeIMS.Web.ViewModels.System;
 

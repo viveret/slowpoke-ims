@@ -2,9 +2,12 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Client;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Identity;
+using slowpoke.core.Models.Node;
 using slowpoke.core.Services.Identity;
 using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
@@ -60,6 +63,8 @@ public class SystemController : Controller
             WorkingSet64 = process.WorkingSet64,
         });
     }
+
+#region Config
     
     [HttpGet("system/config"), ShowInNavBar("Configuration")]
     public ActionResult Config() => View(new ConfigViewModel
@@ -67,7 +72,17 @@ public class SystemController : Controller
         Config = config
     });
     
+    [HttpPost("system/config/save")]
+    public ActionResult ConfigSave(CancellationToken ct) { config.Save(ct); return RedirectToAction(nameof(Config)); }
+    
+    [HttpPost("system/config/load")]
+    public ActionResult ConfigLoad(CancellationToken ct) { config.Load(ct); return RedirectToAction(nameof(Config)); }
+
+#endregion
 #region No Category
+    
+    [HttpGet("ping")]
+    public ActionResult Ping() => Ok();
 
     [HttpGet("system/npm-run-build"), ShowInNavBar]
     public ActionResult NpmRunBuild() {
@@ -143,35 +158,46 @@ public class SystemController : Controller
 #region Document Providers
 
     [HttpGet("system/document-providers"), ShowInNavBar("Document Providers")]
-    public ActionResult DocumentProviders() => View(new DocumentProvidersViewModel
+    public async Task<ActionResult> DocumentProviders() => View(new DocumentProvidersViewModel
     {
-        ReadOnly = documentProviderResolver.AllReadonlyProviders,
-        Readwrite = documentProviderResolver.AllReadWriteProviders,
+        ReadOnly = await documentProviderResolver.AllReadonlyProviders,
+        Readwrite = await documentProviderResolver.AllReadWriteProviders,
     });
 
     [HttpGet("system/local-network-document-providers"), ShowInNavBar("Local Network Document Providers")]
-    public ActionResult LocalNetworkDocumentProviders() => View(new DocumentProvidersViewModel
+    public async Task<ActionResult> LocalNetworkDocumentProviders() => View(new DocumentProvidersViewModel
     {
-        ReadOnly = documentProviderResolver.ReadRemotes,
-        Readwrite = documentProviderResolver.ReadWriteRemotes,
+        ReadOnly = await documentProviderResolver.ReadRemotes,
+        Readwrite = await documentProviderResolver.ReadWriteRemotes,
     });
 
 #endregion
 #region Hosts
 
     [HttpGet("system/hosts"), ShowInNavBar("Hosts")]
-    public ActionResult Hosts() => View(new HostsViewModel
+    public async Task<ActionResult> Hosts() => View(new HostsViewModel
     {
-        AllHosts = slowPokeHostProvider.All,
-        TrustedHosts = slowPokeHostProvider.Trusted,
-        KnownButUntrustedHosts = slowPokeHostProvider.KnownButUntrusted,
+        AllHosts = await Task.WhenAll(slowPokeHostProvider.All.Select(GetViewModelForHost)),
+        TrustedHosts = await Task.WhenAll(slowPokeHostProvider.Trusted.Select(GetViewModelForHost)),
+        KnownButUntrustedHosts = await Task.WhenAll(slowPokeHostProvider.KnownButUntrusted.Select(GetViewModelForHost)),
     });
+
+    private async Task<SlowPokeHostViewModel> GetViewModelForHost(ISlowPokeHost host)
+    {
+        return new SlowPokeHostViewModel(host, await slowPokeHostProvider.OpenClient(host.Endpoint, CancellationToken.None));
+    }
 
     // initiates a search request
     [HttpGet("system/hosts/search")]
     public ActionResult HostsSearch(CancellationToken ct) =>
         RedirectToAction(nameof(ScheduledTaskContextDetails),
                             new { id = scheduledTaskManager.Execute(scheduledTaskManager.GetScheduledTask(typeof(ScanLocalNetworkForPeersScheduledTask).FullName)).Id });
+
+    [HttpGet("system/hosts/details/{endpoint}")]
+    public async Task<ActionResult> HostDetails(string endpoint) => Uri.TryCreate(Uri.UnescapeDataString(endpoint), new UriCreationOptions(), out var uri) ? View(new HostsViewModel
+    {
+        Host = new SlowPokeHostViewModel(new SlowPokeHostModel { Endpoint = uri }, await slowPokeHostProvider.OpenClient(uri, CancellationToken.None))
+    }) : BadRequest();
 
 #endregion
 #region Broadcast Messages

@@ -5,31 +5,33 @@ namespace slowpoke.core.Services.Node.Docs;
 
 public interface IDocumentProviderResolver
 {
-    ISlowPokeHost Host { get; } // identifies the resolver
+    Task<ISlowPokeHost> Host { get; } // identifies the resolver
+
+    bool IsForAutomatedTests { get; }
     
-    IReadOnlyDocumentResolver ReadLocal { get; }
+    Task<IReadOnlyDocumentResolver> ReadLocal { get; }
 
-    IWritableDocumentResolver ReadWriteLocal { get; }
+    Task<IWritableDocumentResolver> ReadWriteLocal { get; }
 
-    IEnumerable<IReadOnlyDocumentResolver> ReadOnlyLocalDriveProviders { get; }
+    Task<IEnumerable<IReadOnlyDocumentResolver>> ReadOnlyLocalDriveProviders { get; }
 
-    IEnumerable<IReadOnlyDocumentResolver> ReadRemotes { get; }
+    Task<IEnumerable<IReadOnlyDocumentResolver>> ReadRemotes { get; }
 
-    IEnumerable<IWritableDocumentResolver> ReadWriteRemotes { get; }
+    Task<IEnumerable<IWritableDocumentResolver>> ReadWriteRemotes { get; }
 
-    IEnumerable<IReadOnlyDocumentResolver> AllReadonlyProviders { get; }
+    Task<IEnumerable<IReadOnlyDocumentResolver>> AllReadonlyProviders { get; }
     
-    IEnumerable<IWritableDocumentResolver> AllReadWriteProviders { get; }
+    Task<IEnumerable<IWritableDocumentResolver>> AllReadWriteProviders { get; }
 
-    NodePermissionCategories<IEnumerable<IReadOnlyDocumentResolver>> ResolveReadable { get; }
+    Task<NodePermissionCategories<IEnumerable<IReadOnlyDocumentResolver>>> ResolveReadable { get; }
     
-    NodePermissionCategories<IEnumerable<IWritableDocumentResolver>> ResolveWritable { get; }
+    Task<NodePermissionCategories<IEnumerable<IWritableDocumentResolver>>> ResolveWritable { get; }
 
-    NodePermissionCategories<IReadOnlyDocumentResolver> UnifiedReadable { get; }
+    Task<NodePermissionCategories<IReadOnlyDocumentResolver>> UnifiedReadable { get; }
     
-    NodePermissionCategories<IWritableDocumentResolver> UnifiedWritable { get; }
+    Task<NodePermissionCategories<IWritableDocumentResolver>> UnifiedWritable { get; }
 
-    IReadOnlyDocumentResolver OpenReadRemote(Uri endpoint, TimeSpan? cacheDuration);
+    Task<IReadOnlyDocumentResolver> OpenReadRemote(Uri endpoint, TimeSpan? cacheDuration);
 
-    IWritableDocumentResolver OpenReadWriteRemote(Uri endpoint, TimeSpan? cacheDuration);
+    Task<IWritableDocumentResolver> OpenReadWriteRemote(Uri endpoint, TimeSpan? cacheDuration);
 }

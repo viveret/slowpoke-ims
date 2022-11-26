@@ -1,3 +1,5 @@
+using slowpoke.core.Models.Configuration;
+
 namespace slowpoke.core.Models.Node.Docs;
 
 
@@ -15,7 +17,7 @@ public class DocPathUri : DocPathBase
         // }
     }
 
-    public DocPathUri(string pathValue, Config.Config config) : base(pathValue, config)
+    public DocPathUri(string pathValue, Config config) : base(pathValue, config)
     {
         if (!Uri.TryCreate(pathValue, UriKind.Absolute, out var uri))
         {

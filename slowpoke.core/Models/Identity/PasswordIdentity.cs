@@ -2,15 +2,17 @@ namespace slowpoke.core.Models.Identity;
 
 public class PasswordIdentity: ISlowPokeIdentity
 {
-    public Guid IdentityGuid { get; }
+    public Guid IdentityGuid { get; set; }
     
-    public Guid AuthGuid { get; }
+    public Guid AuthGuid { get; set; }
 
-    public string AuthAlg { get; }
+    public string AuthAlg { get; set; } = string.Empty;
 
-    public string AuthKeyString { get; }
+    public string AuthKeyString { get; set; } = string.Empty;
 
-    public byte[] AuthKeyValue { get; }
+    public byte[] AuthKeyValue { get; set; } = Array.Empty<byte>();
+
+    public bool Exists => false;
 
     public bool AuthKeyEquals(ISlowPokeIdentity other)
     {

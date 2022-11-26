@@ -12,4 +12,8 @@ public interface IScheduledTask
     IScheduledTaskContext CreateContext(IScheduledTaskManager scheduledTaskManager);
     
     Task Execute(IScheduledTaskContext context);
+    
+    Task OnStart(IScheduledTaskContext t);
+    
+    Task OnEnd(IScheduledTaskContext t);
 }

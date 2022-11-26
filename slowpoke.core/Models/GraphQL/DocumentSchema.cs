@@ -1,5 +1,6 @@
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
+using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Services.Node.Docs;
 
@@ -14,8 +15,8 @@ public class DocumentSchema : Schema
         {
             Name = "Document";
 
-            Field<BooleanGraphType>(nameof(documentResolver.ResolveReadable.CanRead))
-                .Resolve(ctx => documentResolver.ResolveReadable.CanRead);
+            Field<BooleanGraphType>("CanRead")
+                .ResolveAsync(async ctx => (await documentResolver.ResolveReadable).CanRead);
         }
     }
 

@@ -1,11 +1,12 @@
 using System.Linq;
-using slowpoke.core.Models.Config;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Diff;
 using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.Node.Docs.ReadOnlyLocal;
 using slowpoke.core.Services.Broadcast;
 using slowpoke.core.Util;
+using SlowPokeIMS.Core.Collections;
 
 namespace slowpoke.core.Services.Node.Docs;
 
@@ -26,13 +27,13 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
 
     public string ResolverTypeName => "Read Only Local";
     
-    public bool CanSync => config.P2P.SyncEnabled;
+    public Task<bool> CanSync => Task.FromResult(config.P2P.SyncEnabled);
 
-    public virtual NodePermissionCategories<bool> Permissions
+    public virtual Task<NodePermissionCategories<bool>> Permissions
     {
         get
         {
-            return new NodePermissionCategories<bool>
+            return Task.FromResult(new NodePermissionCategories<bool>
             {
                 CanRead = true,
                 CanWrite = false,
@@ -42,58 +43,78 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
                 LimitedToLocalNetworkOnly = false,
                 LimitedToAllowedConnectionsOnly = false,
                 UnlimitedUniversalPublicAccess = false,
-            };
+            });
         }
     }
 
-    public ISlowPokeHost Host => new SlowPokeHostModel { Label = "localhost" };
+    public Task<ISlowPokeHost> Host => Task.FromResult<ISlowPokeHost>(new SlowPokeHostModel { Label = "localhost" });
 
-    public int GetCountOfNodes(CancellationToken cancellationToken) => Directory.EnumerateFileSystemEntries(config.Paths.HomePath, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }).Count();
+    public Task<int> GetCountOfNodes(CancellationToken cancellationToken) => Task.FromResult(
+        Directory.EnumerateFileSystemEntries(
+            config.Paths.HomePath,
+            Config.PathsConfig.DocMetaExtensionPattern,
+            new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }
+        ).Count()
+    );
 
-    public int GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken) => Directory.EnumerateFileSystemEntries(folder.ConvertToAbsolutePath().PathValue, Config.PathsConfig.DocMetaExtensionPattern, new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false }).Count();
+    public Task<int> GetCountOfNodesInFolder(INodePath folder, CancellationToken cancellationToken) => Task.FromResult(
+        Directory.EnumerateFileSystemEntries(
+            folder.ConvertToAbsolutePath().PathValue,
+            Config.PathsConfig.DocMetaExtensionPattern,
+            new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = false }
+        ).Count()
+    );
 
-    public virtual IReadOnlyDocumentMeta GetMeta(IReadOnlyNode node, CancellationToken cancellationToken) => new ReadOnlyDocumentMeta(this, node.Path);
+    public virtual Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyDocumentMeta>(
+        new ReadOnlyDocumentMeta(this, node.Path)
+    );
 
-    public bool HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)
+    public Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         var metaPath = node.Path.ConvertToAbsolutePath().ConvertToMetaPath().PathValue;
-        return File.Exists(metaPath);
+        return Task.FromResult(File.Exists(metaPath));
     }
 
-    public virtual IReadOnlyNode GetNodeAtPath(INodePath path, CancellationToken cancellationToken) => new ReadOnlyDocument(this, broadcastProviderResolver.MemCached, path);
+    public virtual Task<IReadOnlyNode> GetNodeAtPath(INodePath path, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyNode>(
+        new ReadOnlyDocument(this, broadcastProviderResolver.MemCached, path)
+    );
     
-    public virtual IReadOnlyFolder GetFolderAtPath(INodePath path, CancellationToken cancellationToken) => new ReadOnlyFolder(this, broadcastProviderResolver.MemCached, path);
+    public virtual Task<IReadOnlyFolder> GetFolderAtPath(INodePath path, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyFolder>(
+        new ReadOnlyFolder(this, broadcastProviderResolver.MemCached, path)
+    );
 
-    public IEnumerable<IReadOnlyNode> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken) => System.IO.Directory.EnumerateFiles(folder.ConvertToAbsolutePath().PathValue, Config.PathsConfig.DocMetaExtensionPattern)
-                                                                                                            .Skip(offset).Take(amount).Select(p => GetNodeAtPath(p.AsIDocPath(config), cancellationToken));
+    public async Task<IEnumerable<IReadOnlyNode>> GetNodesInFolder(INodePath folder, int offset, int amount, CancellationToken cancellationToken) => await Task.WhenAll(
+        System.IO.Directory.EnumerateFiles(folder.ConvertToAbsolutePath().PathValue, Config.PathsConfig.DocMetaExtensionPattern)
+            .Skip(offset).Take(amount).Select(p => GetNodeAtPath(p.AsIDocPath(config), cancellationToken))
+    );
 
-    public int GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken) => GetEnumerableNodes(options, cancellationToken).Count();
+    public async Task<int> GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken) => (await GetEnumerableNodes(options, cancellationToken)).Count();
 
-    public IEnumerable<IReadOnlyNode> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public async Task<IEnumerable<IReadOnlyNode>> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
-        var nodes = GetEnumerableNodes(options, cancellationToken);
+        var nodes = await GetEnumerableNodes(options, cancellationToken);
         switch (options.OrderByColumn)
         {
             case nameof(IReadOnlyDocumentMeta.LastUpdate):
-            nodes = options.OrderByAscending ? nodes.OrderBy(f => f.Meta.LastUpdate): nodes.OrderByDescending(f => f.Meta.LastUpdate);
+            nodes = await (options.OrderByAscending ? nodes.OrderByAsync(async f => (await f.Meta).LastUpdate): nodes.OrderByDescendingAsync(async f => (await f.Meta).LastUpdate));
             break;
             case nameof(IReadOnlyDocumentMeta.CreationDate):
-            nodes = options.OrderByAscending ? nodes.OrderBy(f => f.Meta.CreationDate): nodes.OrderByDescending(f => f.Meta.CreationDate);
+            nodes = await (options.OrderByAscending ? nodes.OrderByAsync(async f => (await f.Meta).CreationDate): nodes.OrderByDescendingAsync(async f => (await f.Meta).CreationDate));
             break;
             case nameof(IReadOnlyDocumentMeta.ArchivedDate):
-            nodes = options.OrderByAscending ? nodes.OrderBy(f => f.Meta.ArchivedDate): nodes.OrderByDescending(f => f.Meta.ArchivedDate);
+            nodes = await (options.OrderByAscending ? nodes.OrderByAsync(async f => (await f.Meta).ArchivedDate): nodes.OrderByDescendingAsync(async f => (await f.Meta).ArchivedDate));
             break;
             case nameof(IReadOnlyDocumentMeta.LastSyncDate):
-            nodes = options.OrderByAscending ? nodes.OrderBy(f => f.Meta.LastSyncDate): nodes.OrderByDescending(f => f.Meta.LastSyncDate);
+            nodes = await (options.OrderByAscending ? nodes.OrderByAsync(async f => (await f.Meta).LastSyncDate): nodes.OrderByDescendingAsync(async f => (await f.Meta).LastSyncDate));
             break;
             case nameof(IReadOnlyDocumentMeta.Title):
             {
                 IComparer<string> comparer = new NodeTitleComparer();
-                nodes = options.OrderByAscending ? nodes.OrderBy(k => k.Meta.Title, comparer: comparer) : nodes.OrderByDescending(k => k.Meta.Title, comparer: comparer);
+                nodes = await (options.OrderByAscending ? nodes.OrderByAsync(async k => (await k.Meta).Title, comparer: comparer) : nodes.OrderByDescendingAsync(async k => (await k.Meta).Title, comparer: comparer));
                 break;
             }
-            case nameof(IReadOnlyDocument.ContentType):
-            nodes = nodes.OrderBy(k => k.Meta.ContentType);
+            case "ContentType":
+            nodes = await nodes.OrderByAsync(async k => (await k.Meta).ContentType);
             break;
             case nameof(IReadOnlyDocument.Path):
             {
@@ -111,25 +132,27 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
         return nodes.Skip(options.Offset).Take(options.PageSize).ToList();
     }
 
-    private IEnumerable<IReadOnlyNode> GetEnumerableNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
+    private async Task<IEnumerable<IReadOnlyNode>> GetEnumerableNodes(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
-        return GetPaths(options, cancellationToken)
-                        .Select(p => p.IsDocument ? (IReadOnlyNode) GetNodeAtPath(p, cancellationToken) : GetFolderAtPath(p, cancellationToken));
+        var paths = await GetPaths(options, cancellationToken);
+        var docs = await Task.WhenAll(paths.Where(p => p.IsDocument && !p.IsMeta).Select(p => GetNodeAtPath(p, cancellationToken)));
+        var folders = await Task.WhenAll(paths.Where(p => p.IsFolder && !p.IsMeta).Select(p => GetFolderAtPath(p, cancellationToken)));
+        return docs.Concat(folders);
     }
 
-    public int GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public async Task<int> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
-        return GetPaths(options, cancellationToken).Count();
+        return (await GetPaths(options, cancellationToken)).Count();
     }
 
-    public IEnumerable<INodePath> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public async Task<IEnumerable<INodePath>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         var path = string.Empty;
         path = options.Path.HasValue() ? Path.Combine(path, options.Path.ConvertToAbsolutePath().PathValue) : path;
         path = options.Folder.HasValue() ? Path.Combine(path, options.Folder.PathValue): path;
         
-        var ext = options.Extension;
+        var ext = options.Extension ?? string.Empty;
 
         if (Directory.Exists(path))
         {
@@ -188,7 +211,8 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
             }
             if (options.ContentType.HasValue())
             {
-                paths = paths.Where(p => options.ContentType == GetContentTypeFromExtension(p.GetFullExtension()));
+                var awaitedPaths = (await Task.WhenAll(paths.Select(async p => (p, options.ContentType == (await GetContentTypeFromExtension(p.GetFullExtension())))))).Where(v => v.Item2).Select(v => v.p);
+                paths = awaitedPaths;
             }
             if (options.SyncEnabled.HasValue)
             {
@@ -206,12 +230,12 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
         }
     }
 
-    public bool NodeExistsAtPath(INodePath path, CancellationToken cancellationToken)
+    public Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken)
     {
-        return File.Exists(path.ConvertToAbsolutePath().PathValue);
+        return Task.FromResult(File.Exists(path.ConvertToAbsolutePath().PathValue));
     }
 
-    public string GetContentTypeFromExtension(string extension)
+    public Task<string> GetContentTypeFromExtension(string extension)
     {
         if (extension.HasValue())
         {
@@ -220,26 +244,26 @@ public class ReadOnlyLocalDocumentResolver : IReadOnlyDocumentResolver
                 extension = extension.Substring(1);
             }
             var matches = config.Paths.ContentTypeToExtensionMap.Where(kvp => kvp.Value == extension);
-            return matches.Select(kvp => kvp.Key).FirstOrDefault() ?? string.Empty;
+            return Task.FromResult(matches.Select(kvp => kvp.Key).FirstOrDefault() ?? string.Empty);
         }
         else
         {
-            return string.Empty;
+            return Task.FromResult(string.Empty);
         }
     }
 
-    public string GetExtensionFromContentType(string contentType)
+    public Task<string> GetExtensionFromContentType(string contentType)
     {
-        return contentType.HasValue() && config.Paths.ContentTypeToExtensionMap.TryGetValue(contentType.ToLower(), out var ext) ? ext : string.Empty;
+        return Task.FromResult(contentType.HasValue() && config.Paths.ContentTypeToExtensionMap.TryGetValue(contentType.ToLower(), out var ext) ? ext : string.Empty);
     }
 
-    public IEnumerable<INodeDiffBrief> FetchChangesForNode(IReadOnlyNode node, CancellationToken cancellationToken)
+    public Task<IEnumerable<INodeDiffBrief>> FetchChangesForNode(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }
 
-    public IEnumerable<INodeFingerprint> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken)
+    public async Task<IEnumerable<INodeFingerprint>> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken)
     {
-        yield return node.GetFingerprint(cancellationToken);
+        return new INodeFingerprint[] { await node.GetFingerprint(cancellationToken) };
     }
 }

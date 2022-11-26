@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -6,19 +7,19 @@ namespace slowpoke.core.Models.Broadcast.Messages;
 
 public abstract class BroadcastMessageBase : IBroadcastMessage
 {
-    [JsonIgnore]
+    [JsonIgnore, IgnoreDataMember]
     public Guid OriginGuid { get; set; }
 
-    [JsonIgnore]
+    [JsonIgnore, IgnoreDataMember]
     public Guid EventGuid { get; set; }
 
-    [JsonIgnore]
-    public string Type { get => GetType().FullName; set => throw new NotSupportedException(); }
+    [JsonIgnore, IgnoreDataMember]
+    public string Type { get => GetType().FullName!; set => throw new NotSupportedException(); }
     
-    [JsonIgnore]
+    [JsonIgnore, IgnoreDataMember]
     public DateTime? BroadcastSendDate { get; set; }
     
-    [JsonIgnore]
+    [JsonIgnore, IgnoreDataMember]
     public DateTime? BroadcastReceiveDate { get; set; }
 
     public IBroadcastMessage ConvertToRaw()

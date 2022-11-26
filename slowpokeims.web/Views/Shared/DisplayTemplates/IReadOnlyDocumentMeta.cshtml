@@ -1,30 +1,31 @@
 @model slowpoke.core.Models.Node.Docs.IReadOnlyDocumentMeta
 @{
     var classSize = (ViewData["classSize"] as string) ?? "";
-    var badgeClass = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+    ViewData["badgeClass"] = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
     var props = Model.GetType().GetProperties().Select(p => p.Name).ToArray();
     var propsToIgnore = new string[] { nameof(Model.MetaJson), nameof(Model.Title), nameof(Model.Path) };
 }
-@if (Model.MetaExists)
+@if (await Model.MetaExists)
 {
-    <span title="Has meta file" class="@badgeClass s-badge__danger">M</span>
+    <span title="Has meta file" class="@ViewData["badgeClass"] s-badge__danger">M</span>
 }
 else
 {
-    <span class="@badgeClass s-badge__danger">No meta found</span>
+    <span class="@ViewData["badgeClass"] s-badge__danger">No meta found</span>
 }
 @foreach (var p in Model.GetType().GetProperties())
 {
-    var asStr = p.GetValue(Model)?.ToString();
+    var pval = await p.PossiblyAwaitGetPropertyValue(Model);
+    var asStr = pval?.ToString();
     if (string.IsNullOrEmpty(asStr) || propsToIgnore.Contains(p.Name))
         continue;
 
-    <span class="@badgeClass">@p.Name: @asStr</span>
+    <span class="@ViewData["badgeClass"]">@p.Name: @asStr</span>
 }
 @foreach (var p in Model.MetaJson)
 {
     if (props.Contains(p.Key))
         continue;
     
-    <span class="@badgeClass">@p.Key: @p.Value</span>
+    <span class="@ViewData["badgeClass"]">@p.Key: @p.Value</span>
 }

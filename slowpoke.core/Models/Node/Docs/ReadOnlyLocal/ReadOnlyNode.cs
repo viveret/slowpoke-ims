@@ -21,25 +21,25 @@ public abstract class ReadOnlyNode: IReadOnlyNode
     }
 
 
-    public virtual IReadOnlyDocumentMeta Meta { get => documentResolver.GetMeta(this, CancellationToken.None); }
+    public virtual Task<IReadOnlyDocumentMeta> Meta { get => documentResolver.GetMeta(this, CancellationToken.None); }
     
-    public virtual bool HasMeta => documentResolver.HasMeta(this, CancellationToken.None);
+    public virtual Task<bool> HasMeta => documentResolver.HasMeta(this, CancellationToken.None);
 
-    public abstract bool Exists { get; }
+    public abstract Task<bool> Exists { get; }
     
-    public abstract long SizeBytes { get; }
+    public abstract Task<long> SizeBytes { get; }
     
-    public abstract NodePermissionCategories<bool> Permissions { get; }
+    public abstract Task<NodePermissionCategories<bool>> Permissions { get; }
 
-    public ISlowPokeHost Host => documentResolver.Host;
+    public Task<ISlowPokeHost> Host => documentResolver.Host;
 
-    public ISlowPokeId SlowPokeId => new SlowPokeIdModel { RawId = Path.PathValue, RawIdType = GetType().Name, Endpoint = new Uri($"file:{Path.ConvertToAbsolutePath().PathValue}") };
+    public ISlowPokeId SlowPokeId => new SlowPokeIdModel { RawId = Path.PathValue, RawIdType = GetType().Name, Endpoint = new Uri($"file://{Path.ConvertToAbsolutePath().PathValue}") };
 
-    public bool CanSync => documentResolver.CanSync;
+    public Task<bool> CanSync => documentResolver.CanSync;
 
-    public bool Equals(IReadOnlyNode? other) => CompareTo(other) == 0;
+    public async Task<bool> Equals(IReadOnlyNode? other) => await CompareTo(other) == 0;
 
-    public int CompareTo(IReadOnlyNode? other)
+    public Task<int> CompareTo(IReadOnlyNode? other)
     {
         throw new NotImplementedException();
     }
@@ -60,13 +60,13 @@ public abstract class ReadOnlyNode: IReadOnlyNode
         }
     }
 
-    public abstract void Sync(CancellationToken cancellationToken);
-    public abstract void BroadcastChanges(CancellationToken cancellationToken);
-    public abstract void PollForChanges(CancellationToken cancellationToken);
-    public abstract void TurnOnSync(CancellationToken cancellationToken);
-    public abstract void TurnOffSync(CancellationToken cancellationToken);
-    public abstract string ComputeHash();
-    public abstract void MergeChanges(CancellationToken cancellationToken);
-    public abstract IEnumerable<INodeDiffBrief> FetchChanges(CancellationToken cancellationToken);
-    public abstract INodeFingerprint GetFingerprint(CancellationToken cancellationToken);
+    public abstract Task Sync(CancellationToken cancellationToken);
+    public abstract Task BroadcastChanges(CancellationToken cancellationToken);
+    public abstract Task PollForChanges(CancellationToken cancellationToken);
+    public abstract Task TurnOnSync(CancellationToken cancellationToken);
+    public abstract Task TurnOffSync(CancellationToken cancellationToken);
+    public abstract Task MergeChanges(CancellationToken cancellationToken);
+    public abstract Task<string> ComputeHash();
+    public abstract Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken);
+    public abstract Task<INodeFingerprint> GetFingerprint(CancellationToken cancellationToken);
 }

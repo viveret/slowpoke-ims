@@ -1,0 +1,16 @@
+@using slowpoke.core.Models.Node
+@using SlowPokeIMS.Web.ViewModels.System
+@model SlowPokeHostViewModel
+@{
+    var asId = Model.Host as ISlowPokeId;
+}
+<a asp-action="HostDetails" asp-controller="System" asp-route-endpoint="@Model.Client.Endpoint">@Model.Client.Endpoint</a>
+<ul>
+    <li><b>@Html.DisplayNameFor(m => m.Host.Label)</b> @Html.DisplayFor(m => m.Host.Label)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.Guid)</b> @Html.DisplayFor(m => m.Host.Guid)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.GuidAlternatives)</b> @Html.DisplayFor(m => m.Host.GuidAlternatives)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.Endpoint)</b> @Html.DisplayFor(m => m.Host.Endpoint)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.EndpointAlternatives)</b> @Html.DisplayFor(m => m.Host.EndpointAlternatives)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.RawIdType)</b> @Html.DisplayFor(m => m.Host.RawIdType)</li>
+    <li><b>@Html.DisplayNameFor(m => m.Host.RawId)</b> @Html.DisplayFor(m => m.Host.RawId)</li>
+</ul>

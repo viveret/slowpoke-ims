@@ -1,3 +1,5 @@
+using SlowPokeIMS.Core.Collections;
+
 namespace slowpoke.core.Models.Node;
 
 
@@ -21,19 +23,22 @@ public class NodePermissionCategories<T>
 
     public T IsRemote { get; set; }
 
-    public NodePermissionCategories<TOut> Transform<TOut>(Func<T, TOut> transformer)
+
+    public static async Task<NodePermissionCategories<IEnumerable<T>>> FilterPermissions(
+        Task<IEnumerable<T>> list, Func<T, Task<bool>> valueConditional)
     {
-        return new NodePermissionCategories<TOut>
+        var items = await list;
+        return new NodePermissionCategories<IEnumerable<T>>
         {
-            CanRead = transformer(this.CanRead),
-            CanWrite = transformer(this.CanWrite),
-            IsEncrypted = transformer(this.IsEncrypted),
-            IsRemote = transformer(this.IsRemote),
-            LimitedToUserOnly = transformer(this.LimitedToUserOnly),
-            LimitedToMachineOnly = transformer(this.LimitedToMachineOnly),
-            LimitedToLocalNetworkOnly = transformer(this.LimitedToLocalNetworkOnly),
-            LimitedToAllowedConnectionsOnly = transformer(this.LimitedToAllowedConnectionsOnly),
-            UnlimitedUniversalPublicAccess = transformer(this.UnlimitedUniversalPublicAccess),
+            CanRead = await items.WhereAsync(valueConditional),
+            CanWrite = await items.WhereAsync(valueConditional),
+            IsEncrypted = await items.WhereAsync(valueConditional),
+            LimitedToUserOnly = await items.WhereAsync(valueConditional),
+            LimitedToMachineOnly = await items.WhereAsync(valueConditional),
+            LimitedToLocalNetworkOnly = await items.WhereAsync(valueConditional),
+            LimitedToAllowedConnectionsOnly = await items.WhereAsync(valueConditional),
+            UnlimitedUniversalPublicAccess = await items.WhereAsync(valueConditional),
+            IsRemote = Enumerable.Empty<T>(),
         };
     }
 }

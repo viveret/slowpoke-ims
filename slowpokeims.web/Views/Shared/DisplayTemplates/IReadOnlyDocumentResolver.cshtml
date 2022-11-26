@@ -1,6 +1,7 @@
 @model slowpoke.core.Services.Node.Docs.IReadOnlyDocumentResolver
 @{
     var showHost = true;// ViewData["showHost"] == "true";    
+    var perms = await Model.Permissions;
 }
 <div class="s-card mt128">
     @if (showHost)
@@ -20,7 +21,7 @@
                     <div class="fs-body1">@Model.InstanceName</div>
                 }
             </a>
-            @Html.DisplayFor(m => m.Permissions)
+            @Html.DisplayFor(m => perms)
         </div>
         <div class="grid--item">
             <div class="ta-right">

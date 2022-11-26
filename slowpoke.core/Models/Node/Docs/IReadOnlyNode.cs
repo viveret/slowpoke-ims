@@ -1,43 +1,44 @@
 using slowpoke.core.Models.Diff;
+using SlowPokeIMS.Core.Collections;
 
 namespace slowpoke.core.Models.Node.Docs;
 
-public interface IReadOnlyNode: IEquatable<IReadOnlyNode>, IComparable<IReadOnlyNode>
+public interface IReadOnlyNode: IAsyncEquatable<IReadOnlyNode>, IAsyncComparable<IReadOnlyNode>
 {
     INodePath Path { get; }
 
     ISlowPokeId SlowPokeId { get; }
 
-    IReadOnlyDocumentMeta Meta { get; }
+    Task<IReadOnlyDocumentMeta> Meta { get; }
 
-    ISlowPokeHost Host { get; }
+    Task<ISlowPokeHost> Host { get; }
 
-    NodePermissionCategories<bool> Permissions { get; }
+    Task<NodePermissionCategories<bool>> Permissions { get; }
 
-    bool Exists { get; }
+    Task<bool> Exists { get; }
     
-    bool HasMeta { get; }
+    Task<bool> HasMeta { get; }
 
-    long SizeBytes { get; }
+    Task<long> SizeBytes { get; }
 
-    string ComputeHash();
+    Task<string> ComputeHash();
 
     // if the node is enabled and the host has enabled syncing
-    bool CanSync { get; }
+    Task<bool> CanSync { get; }
 
     // Does a poll for changes and checks if current file will collide with incoming change
     // Also broadcasts out changes if there are any
-    void Sync(CancellationToken cancellationToken);
+    Task Sync(CancellationToken cancellationToken);
 
-    void BroadcastChanges(CancellationToken cancellationToken);
+    Task BroadcastChanges(CancellationToken cancellationToken);
     
-    void MergeChanges(CancellationToken cancellationToken);
+    Task MergeChanges(CancellationToken cancellationToken);
     
-    IEnumerable<INodeDiffBrief> FetchChanges(CancellationToken cancellationToken);
+    Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken);
     
-    void TurnOnSync(CancellationToken cancellationToken);
+    Task TurnOnSync(CancellationToken cancellationToken);
     
-    void TurnOffSync(CancellationToken cancellationToken);
+    Task TurnOffSync(CancellationToken cancellationToken);
     
-    INodeFingerprint GetFingerprint(CancellationToken cancellationToken);
+    Task<INodeFingerprint> GetFingerprint(CancellationToken cancellationToken);
 }

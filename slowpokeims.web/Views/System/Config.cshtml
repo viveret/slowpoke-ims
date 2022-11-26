@@ -1,10 +1,83 @@
+@using System.Collections
+@using System.Linq
 @model ConfigViewModel
-<style>
-</style>
 <div class="flex--item pt64">
     <h1 class="fs-title">@ViewData["Title"]</h1>
+    <div class="">Path: @Model.Config.GetConfigPath()</div>
+
+    <div class="d-grid grid__2">
+        @foreach (var action in new string[] { "Save", "Load" })
+        {
+            <div class="grid--item">
+                @using (Html.BeginForm($"Config{action}", "System", FormMethod.Post))
+                {
+                    <button class="s-btn s-btn__primary" type="submit">@action</button>
+                }
+            </div>
+        }
+    </div>
+
     <div class="d-grid grid__2 md:grid__1 g32 mt32">
-        <div class="grid--item s-card"><h2 class="fs-body3">Paths</h2>@Html.DisplayFor(m => m.Config.Paths)</div>
-        <div class="grid--item s-card"><h2 class="fs-body3">System</h2>@Html.DisplayFor(m => m.Config.System)</div>
+        @foreach (var configSection in Model.Config.GetType().GetProperties())
+        {
+            var sectionVal = configSection.GetValue(Model.Config);
+            <div class="grid--item s-card">
+                <h2 class="fs-body3">@configSection.Name</h2>
+                <ul class="list-outside">
+                    @foreach (var p in sectionVal.GetType().GetProperties())
+                    {
+                        var val = await p.PossiblyAwaitGetPropertyValue(sectionVal);
+                        if (val is string)
+                        {
+                            <li><b>@p.Name:</b> @val</li>
+                        }
+                        else if (val is IEnumerable enumeration)
+                        {
+                            var ct = 0;
+                            <li>
+                                <b>@p.Name:</b>
+                                <div class="s-card d-flex g8 fw-wrap">
+                                    @foreach (var item in enumeration)
+                                    {
+                                        ct++;
+                                        var vm = new DebugObjectViewModel { Value = item };
+                                        <span class="s-badge d-flex g4"><partial name="DebugObject" model="@vm" /></span>
+                                    }
+                                    @if (ct == 0)
+                                    {
+                                        <i>empty</i>
+                                    }
+                                <div>
+                            </li>
+                        }
+                        else if (val?.GetType()?.IsPrimitive == false)
+                        {
+                            if (val != null)
+                            {
+                                var vm = new DebugObjectViewModel { Value = val };
+                                <li>
+                                    <b>@p.Name:</b>
+                                    <div class="s-card">
+                                        <partial name="DebugObject" model="@vm" />
+                                    </div>
+                                </li>
+                            }
+                            else
+                            {
+                                <li><b>@p.Name:</b> <i>empty</i></li>
+                            }
+                        }
+                        else if (val is bool)
+                        {
+                            <li><b>@p.Name:</b> @val</li>
+                        }
+                        else
+                        {
+                            <li><b>@p.Name:</b> @Html.DisplayFor(m => val)</li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
     </div>
 </div>

@@ -1,12 +1,14 @@
+using slowpoke.core.Models.Configuration;
+
 namespace slowpoke.core.Models.Node.Docs;
 
 public abstract class DocPathBase : INodePath
 {
-    protected Config.Config Config { get; }
+    protected Config Config { get; }
     
     public string PathValue { get; }
 
-    protected DocPathBase(string pathValue, Config.Config config)
+    protected DocPathBase(string pathValue, Config config)
     {
         this.PathValue = !string.IsNullOrWhiteSpace(pathValue) ? pathValue : throw new ArgumentNullException(nameof(pathValue));
         this.Config = config;
@@ -16,11 +18,11 @@ public abstract class DocPathBase : INodePath
     public abstract bool IsRelative { get; }
     public abstract bool IsAbsolute { get; }
 
-    public bool IsDocument => File.Exists(PathValue) || (!Directory.Exists(PathValue) && Path.HasExtension(PathValue) && !PathValue.EndsWith(slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension));
+    public bool IsDocument => File.Exists(PathValue) || (!Directory.Exists(PathValue) && Path.HasExtension(PathValue) && !PathValue.EndsWith(slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension));
 
-    public bool IsMeta => Path.HasExtension(PathValue) && PathValue.EndsWith(slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension);
+    public bool IsMeta => Path.HasExtension(PathValue) && PathValue.EndsWith(slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension);
 
-    public bool IsFolder => Directory.Exists(PathValue);
+    public bool IsFolder => PathValue.EndsWith('/') || Directory.Exists(PathValue);
 
     public abstract INodePath ConvertToAbsolutePath();
     
@@ -31,7 +33,7 @@ public abstract class DocPathBase : INodePath
         return object.ReferenceEquals(this, obj) || (obj is INodePath doc && this.Equals(doc));
     }
     
-    public bool Equals(INodePath doc)
+    public bool Equals(INodePath? doc)
     {
         return doc != null && this.ConvertToAbsolutePath().PathValue == doc.ConvertToAbsolutePath().PathValue;
     }
@@ -50,21 +52,21 @@ public abstract class DocPathBase : INodePath
     {
         if (Path.HasExtension(PathValue))
         {
-            if (PathValue.EndsWith(slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension))
+            if (PathValue.EndsWith(slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension))
             {
                 return this;
             }
             else
             {
                 var metaPath = PathValue;
-                metaPath = metaPath + slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension;
+                metaPath = metaPath + slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension;
                 return new DocPathAbsolute(metaPath, Config);
             }
         }
         else
         {
             var metaPath = PathValue;
-            metaPath = metaPath + slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension;
+            metaPath = metaPath + slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension;
             return new DocPathAbsolute(metaPath, Config);
             //throw new Exception($"Path {PathValue} cannot be converted to meta path");
         }
@@ -74,14 +76,14 @@ public abstract class DocPathBase : INodePath
     {
         if (Path.HasExtension(PathValue))
         {
-            if (!PathValue.EndsWith(slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension))
+            if (!PathValue.EndsWith(slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension))
             {
                 return this;
             }
             else
             {
                 var metaPath = PathValue;
-                metaPath = metaPath.Substring(0, metaPath.Length - slowpoke.core.Models.Config.Config.PathsConfig.DocMetaExtension.Length);
+                metaPath = metaPath.Substring(0, metaPath.Length - slowpoke.core.Models.Configuration.Config.PathsConfig.DocMetaExtension.Length);
                 return new DocPathAbsolute(metaPath, Config);
             }
         }
