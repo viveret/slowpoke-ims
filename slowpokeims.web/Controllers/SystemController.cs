@@ -123,7 +123,7 @@ public class SystemController : Controller
     });
 
     [HttpPost("system/tasks/run/{name}")]
-    public ActionResult RunScheduledTask(string name)
+    public async Task<ActionResult> RunScheduledTask(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -131,12 +131,12 @@ public class SystemController : Controller
         }
 
         var t = scheduledTaskManager.GetScheduledTask(name) ?? throw new Exception($"Could not find task {name}");
-        var progress = scheduledTaskManager.Execute(t, asynchronous: false) ?? throw new Exception($"Could not execute {name}");
+        var progress = (await scheduledTaskManager.Execute(t, asynchronous: false)) ?? throw new Exception($"Could not execute {name}");
         return RedirectToAction(nameof(ScheduledTaskContextDetails), new { id = progress.Id });
     }
 
     [HttpPost("system/tasks/queue/{name}")]
-    public ActionResult QueueScheduledTask(string name)
+    public async Task<ActionResult> QueueScheduledTask(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -144,7 +144,7 @@ public class SystemController : Controller
         }
 
         var t = scheduledTaskManager.GetScheduledTask(name) ?? throw new Exception($"Could not find task {name}");
-        var progress = scheduledTaskManager.Execute(t) ?? throw new Exception($"Could not queue {name}");
+        var progress = (await scheduledTaskManager.Execute(t)) ?? throw new Exception($"Could not queue {name}");
         return RedirectToAction(nameof(ScheduledTaskContextDetails), new { id = progress.Id });
     }
 
@@ -189,15 +189,27 @@ public class SystemController : Controller
 
     // initiates a search request
     [HttpGet("system/hosts/search")]
-    public ActionResult HostsSearch(CancellationToken ct) =>
+    public async Task<ActionResult> HostsSearch(CancellationToken ct) =>
         RedirectToAction(nameof(ScheduledTaskContextDetails),
-                            new { id = scheduledTaskManager.Execute(scheduledTaskManager.GetScheduledTask(typeof(ScanLocalNetworkForPeersScheduledTask).FullName)).Id });
+                            new { id = (await scheduledTaskManager.Execute(scheduledTaskManager.GetScheduledTask(typeof(ScanLocalNetworkForPeersScheduledTask).FullName))).Id });
 
     [HttpGet("system/hosts/details/{endpoint}")]
-    public async Task<ActionResult> HostDetails(string endpoint) => Uri.TryCreate(Uri.UnescapeDataString(endpoint), new UriCreationOptions(), out var uri) ? View(new HostsViewModel
+    public async Task<ActionResult> HostDetails(string endpoint, CancellationToken cancellationToken)
     {
-        Host = new SlowPokeHostViewModel(new SlowPokeHostModel { Endpoint = uri }, await slowPokeHostProvider.OpenClient(uri, CancellationToken.None))
-    }) : BadRequest();
+        if (Uri.TryCreate(Uri.UnescapeDataString(endpoint), new UriCreationOptions(), out var uri))
+        {
+            var host = await slowPokeHostProvider.GetHost(uri, cancellationToken);
+            var client = await slowPokeHostProvider.OpenClient(uri, CancellationToken.None);
+            return View(new HostsViewModel
+            {
+                Host = new SlowPokeHostViewModel(host, client)
+            });
+        }
+        else
+        {
+            return BadRequest();
+        }
+    }
 
 #endregion
 #region Broadcast Messages

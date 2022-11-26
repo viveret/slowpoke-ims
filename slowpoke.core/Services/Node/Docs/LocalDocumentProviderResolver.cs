@@ -14,8 +14,10 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
 {
     private static IEnumerable<IReadOnlyDocumentResolver> CachedReadOnlyLocalNetworkProviders { get; set; } = Enumerable.Empty<IReadOnlyDocumentResolver>();
     private static Task? cacheTask;
+    
+    private ISlowPokeHost localhost;
 
-    public Task<ISlowPokeHost> Host { get; private set; }
+    public Task<ISlowPokeHost> Host => Task.FromResult(localhost);
 
     public Config Config { get; }
 
@@ -26,7 +28,7 @@ public class LocalDocumentProviderResolver : IDocumentProviderResolver
         {
             throw new Exception($"{nameof(Host)} already set");
         }
-        Host = Task.FromResult(localhost);
+        this.localhost = localhost;
     }
 
     private readonly IEnumerable<IReadOnlyDocumentResolver> systemReadonlyProviders;

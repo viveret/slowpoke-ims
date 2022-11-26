@@ -1,4 +1,6 @@
 using slowpoke.core.Models.Broadcast;
+using slowpoke.core.Models.Identity;
+using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.SyncState;
 using slowpoke.core.Services.Broadcast;
@@ -9,6 +11,9 @@ namespace slowpoke.core.Client;
 public interface ISlowPokeClient : IDisposable, IBroadcastProvider
 {
     Uri Endpoint { get; }
+    Task<ISlowPokeIdentity> GetIdentity(CancellationToken cancellationToken);
+    Task<ISlowPokeHost> GetDetails(CancellationToken cancellationToken);
+
     Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken);
     Task<bool> Ping(CancellationToken token);
     Task<int> SearchCount(string path, QueryDocumentOptions? options, CancellationToken cancellationToken);

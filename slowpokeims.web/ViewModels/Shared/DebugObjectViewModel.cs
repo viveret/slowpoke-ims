@@ -4,6 +4,15 @@ namespace SlowPokeIMS.Web.ViewModels.Shared;
 
 public class DebugObjectViewModel
 {
+    public DebugObjectViewModel()
+    {
+    }
+
+    public DebugObjectViewModel(object value)
+    {
+        Value = value;
+    }
+
     public object Value { get; set; }
 
     public int Depth { get; set; }

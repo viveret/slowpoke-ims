@@ -1,17 +1,23 @@
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Services.Node.Docs;
 
 namespace slowpoke.core.Models.Node;
 
 public class LocalSlowPokeHost : ISlowPokeHost
 {
-    public LocalSlowPokeHost(IDocumentProviderResolver docProviderResolver)
+    public LocalSlowPokeHost(
+        Config config,
+        IDocumentProviderResolver docProviderResolver)
     {
+        this.config = config;
         DocProviderResolver = docProviderResolver;
         if (docProviderResolver is LocalDocumentProviderResolver local)
         {
             local.AssignLocalHost(this);
         }
     }
+
+    private readonly Config config;
 
     public IDocumentProviderResolver DocProviderResolver { get; }
 
@@ -28,4 +34,6 @@ public class LocalSlowPokeHost : ISlowPokeHost
     public string RawIdType => string.Empty;
 
     public string RawId => string.Empty;
+
+    public Task<Config> Config => Task.FromResult(config);
 }

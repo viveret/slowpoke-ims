@@ -1,7 +1,8 @@
 @using slowpoke.core.Extensions
 @model ScheduledTasksViewModel
 @{
-    ViewData["Title"] = $"{Model.TaskContext.Id} - {Model.TaskContext.Task?.Title} - Scheduled Task Details";
+    var taskContext = Model.TaskContext;
+    ViewData["Title"] = taskContext != null ? $"{taskContext.Id} - {taskContext.Task?.Title} - Scheduled Task Details" : "taskContext is null";
 }
 <div class="flex--item pt64">
     <a asp-action="@nameof(SystemController.ScheduledTaskDetails)" asp-controller="System" asp-route-name="@Model.TaskContext.Task.GetType().FullName">&lt; Back to task details</a>

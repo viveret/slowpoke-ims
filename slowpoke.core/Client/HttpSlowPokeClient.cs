@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Configuration;
+using slowpoke.core.Models.Identity;
+using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.SyncState;
 
@@ -211,5 +213,15 @@ public class HttpSlowPokeClient : ISlowPokeClient
     {
         var path = testConnection ?  "api/add-trusted-test-connection" : "api/add-trusted";
         return await Query<bool>($"{path}/{Uri.EscapeDataString(hostUrl)}", null, str => Task.FromResult(bool.TryParse(str, out var b) && b ? b : throw new Exception(str)), cancellationToken);
+    }
+
+    public async Task<ISlowPokeIdentity> GetIdentity(CancellationToken cancellationToken)
+    {
+        return (await Query<ISlowPokeIdentity>($"api/get-identity", null, json => Task.FromResult<ISlowPokeIdentity>(JsonSerializer.Deserialize<IdentityModel>(json)!), cancellationToken))!;
+    }
+
+    public Task<ISlowPokeHost> GetDetails(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }

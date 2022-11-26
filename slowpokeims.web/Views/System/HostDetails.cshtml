@@ -2,7 +2,8 @@
 @using System.Linq
 @model HostsViewModel
 @{
-
+    var host = await Model.Host?.Host?.Config;
+    ViewData["Title"] = host?.System?.Title ?? "Host not found";
 }
 <h1>@ViewData["Title"]</h1>
 <div class="pt96">

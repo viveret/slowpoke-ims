@@ -43,7 +43,7 @@ public class TestDocumentProviderResolver : IDocumentProviderResolver
         this.writeResolvers = writeResolvers;
     }
 
-    public Task<ISlowPokeHost> Host { get; }
+    public Task<ISlowPokeHost> Host => Task.FromResult<ISlowPokeHost>(null);
 
     public bool IsForAutomatedTests => true;
 

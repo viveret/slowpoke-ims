@@ -29,8 +29,8 @@ public abstract class SlowPokeHostProviderBase: ISlowPokeHostProvider
         Config config,
         IIdentityAuthenticationService identityAuthenticationService)
     {
-        Config = config;
-        IdentityAuthenticationService = identityAuthenticationService;
+        Config = config ?? throw new ArgumentNullException(nameof(config));
+        IdentityAuthenticationService = identityAuthenticationService ?? throw new ArgumentNullException(nameof(identityAuthenticationService));
     }
     
     public async Task<ISlowPokeClient> OpenClient(Uri location, CancellationToken cancellationToken)

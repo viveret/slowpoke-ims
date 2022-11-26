@@ -6,7 +6,16 @@
 <div class="s-card mt128">
     @if (showHost)
     {
-        @Html.DisplayFor(m => m.Host)
+        var hostTask = Model.Host;
+        if (hostTask == null)
+        {
+            <p>null host task from type @Model.GetType().FullName</p>
+        }
+        else
+        {
+            var host = await hostTask;
+            @Html.DisplayFor(m => host)
+        }
     }
     <div class="d-grid grid__12 g8">
         <div class="grid--item grid--col11">
@@ -21,7 +30,7 @@
                     <div class="fs-body1">@Model.InstanceName</div>
                 }
             </a>
-            @Html.DisplayFor(m => perms)
+            <partial name="DebugObject" model="new DebugObjectViewModel(perms)" />
         </div>
         <div class="grid--item">
             <div class="ta-right">
@@ -30,11 +39,13 @@
             <div id="popover-actions" class="s-popover" role="menu">
             </div>
         </div>
-    </div>
-    <div class="s-card">
         @if (Model is slowpoke.core.Services.Node.Docs.ReadOnlyLocal.ReadOnlyLocalDriveDocumentProvider localDrive)
         {
-            @Html.DisplayFor(m => localDrive.DriveInfo)
+            <div class="grid--item grid--col12 ">
+                <div class="s-card">
+                    @Html.DisplayFor(m => localDrive.DriveInfo)
+                </div>
+            </div>
         }
     </div>
 </div>

@@ -1,4 +1,5 @@
 using slowpoke.core.Client;
+using slowpoke.core.Models.Configuration;
 using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
 
@@ -55,7 +56,7 @@ public class SlowPokeHost : ISlowPokeHost
 
     public string RawId => slowPokeClient.Endpoint.ToString();
 
-
+    public Task<Config> Config => slowPokeClient.Query<Config>("api/get-config", null, json => Task.FromResult(System.Text.Json.JsonSerializer.Deserialize<Config>(json)), CancellationToken.None);
 
     private class QueryHostModelResult
     {

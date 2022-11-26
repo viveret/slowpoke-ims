@@ -1,4 +1,6 @@
 using slowpoke.core.Models.Broadcast;
+using slowpoke.core.Models.Identity;
+using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.SyncState;
 
@@ -21,6 +23,16 @@ public class StubSlowPokeClient : ISlowPokeClient
     }
 
     public void Dispose() { }
+
+    public Task<ISlowPokeHost> GetDetails(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ISlowPokeIdentity> GetIdentity(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {

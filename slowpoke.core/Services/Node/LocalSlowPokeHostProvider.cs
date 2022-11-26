@@ -73,7 +73,8 @@ public class LocalSlowPokeHostProvider: SlowPokeHostProviderBase
 
         var ipBase = string.Join(".", localIp.GetAddressBytes().Select(b => b.ToString()).Take(3)) + ".";
         var ipAddressByteToSkip = localIp.GetAddressBytes().Last();
-        for (short i = 100; i < 256; i++)
+        var tasks = new List<Task<ISlowPokeHost>>();
+        for (short i = 100; i < 255; i++)
         {
             if (i == ipAddressByteToSkip)
             {
@@ -90,48 +91,56 @@ public class LocalSlowPokeHostProvider: SlowPokeHostProviderBase
 
             var timeoutSrc = new CancellationTokenSource(500);
             var ip = $"{ipBase}{i}";
-            logger.LogInformation($"Trying {ip}");
 
-            var ping = false;
-            ISlowPokeClient? resolver = null;
-            try
-            {
-                resolver = await OpenClient(new Uri($"https://{ip}"), cancellationToken: cancellationToken);
-                ping = await resolver.Ping(timeoutSrc.Token);
-                iteratorResults.noExceptionCount++;
-            }
-            catch (HttpRequestException e)
-            {
-                logger.LogError(e, $"HTTP Error from {ip}: {e.Message}");
-                iteratorResults.exceptionCount++;
-            }
-            catch (TaskCanceledException e)
-            {
-                logger.LogError(e, $"Timeout from {ip}: {e.Message}");
-                iteratorResults.timeoutCount++;
-            }
+            tasks.Add(Task<ISlowPokeHost>.Run(async Task<ISlowPokeHost> () => {
+                logger.LogInformation($"Trying {ip}");
 
-            if (ping && resolver != null)
-            {
-                iteratorResults.successCount++;
-                var host = await SlowPokeHost.Resolve(resolver, this);
-                logger.LogInformation($"Successful response from {ip} (label = {host.Label}, guid = {host.Guid})");
+                var ping = false;
+                ISlowPokeClient? resolver = null;
+                try
+                {
+                    resolver = await OpenClient(new Uri($"https://{ip}"), cancellationToken: cancellationToken);
+                    ping = await resolver.Ping(timeoutSrc.Token);
+                    iteratorResults.noExceptionCount++;
+                }
+                catch (HttpRequestException e)
+                {
+                    logger.LogError(e, $"HTTP Error from {ip}: {e.Message}");
+                    iteratorResults.exceptionCount++;
+                    return null;
+                }
+                catch (TaskCanceledException e)
+                {
+                    logger.LogError(e, $"Timeout from {ip}: {e.Message}");
+                    iteratorResults.timeoutCount++;
+                    return null;
+                }
 
-                ret.Add(host);
-            }
-            else
-            {
-                iteratorResults.softFailCount++;
-            }
+                if (ping && resolver != null)
+                {
+                    iteratorResults.successCount++;
+                    var host = await SlowPokeHost.Resolve(resolver, this);
+                    logger.LogInformation($"Successful response from {ip} (label = {host.Label}, guid = {host.Guid})");
+                    return host;
+                }
+                else
+                {
+                    iteratorResults.softFailCount++;
+                    return null;
+                }
+            }));
         }
+
+        var awaitedRet = await Task.WhenAll(tasks);
+        ret.AddRange(awaitedRet.Where(v => v != null));
 
         return ret;
     }
 
     public override Task AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken)
     {
-        var newHostEndpoints = hosts.Select(h => h.Endpoint.ToString());
-        Config.P2P.KnownButUntrustedHosts = Config.P2P.KnownButUntrustedHosts.Concat(newHostEndpoints).ToList();
+        var newHostEndpoints = hosts.Select(h => h?.Endpoint?.ToString()).Where(v => v != null);
+        Config.P2P.KnownButUntrustedHosts = (Config.P2P.KnownButUntrustedHosts != null ? Config.P2P.KnownButUntrustedHosts.Concat(newHostEndpoints) : newHostEndpoints).ToList();
         Config.Save(cancellationToken);
 
         return Task.CompletedTask;

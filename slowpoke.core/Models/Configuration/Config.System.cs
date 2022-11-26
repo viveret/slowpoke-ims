@@ -16,5 +16,11 @@ public partial class Config
 
         [Default("SlowPoke IMS")]
         public string Title { get; set; } = string.Empty;
+
+        string SoftwareVersion { get; set; } = string.Empty;
+        
+        string SoftwareVersionDate { get; set; } = string.Empty;
+        
+        string UserRunningAs { get; set; } = string.Empty;
     }
 }
