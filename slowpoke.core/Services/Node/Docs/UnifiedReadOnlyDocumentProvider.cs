@@ -107,9 +107,9 @@ public class UnifiedReadOnlyDocumentProvider : IReadOnlyDocumentResolver
         return ForEachProviderCapture<IReadOnlyDocumentResolver, IEnumerable<IReadOnlyNode>>(p => p.GetNodes(options, cancellationToken), nodes => nodes != null && nodes.Any(), cancellationToken, defaultConst: Enumerable.Empty<IReadOnlyNode>());
     }
 
-    public Task<IEnumerable<INodePath>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
+    public Task<IEnumerable<IReadOnlyNode>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken)
     {
-        return ForEachProviderCapture<IReadOnlyDocumentResolver, IEnumerable<INodePath>>(p => p.GetPaths(options, cancellationToken), paths => paths != null && paths.Any(), cancellationToken, defaultConst: Enumerable.Empty<INodePath>());
+        return ForEachProviderCapture<IReadOnlyDocumentResolver, IEnumerable<IReadOnlyNode>>(p => p.GetNodes(options, cancellationToken), paths => paths != null && paths.Any(), cancellationToken, defaultConst: Enumerable.Empty<IReadOnlyNode>());
     }
 
     public Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)

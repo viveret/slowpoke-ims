@@ -64,17 +64,17 @@ public partial class ApiController
     public async Task<ActionResult> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken) =>
         new JsonResult(await (await DocumentResolver.ReadLocal).GetNodes(options, cancellationToken));
 
-    [HttpGet("api/get-paths/{path}")]
-    public async Task<ActionResult> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken) =>
-        new JsonResult(await (await DocumentResolver.ReadLocal).GetPaths(options, cancellationToken), cancellationToken);
+    // [HttpGet("api/get-paths/{path}")]
+    // public async Task<ActionResult> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken) =>
+    //     new JsonResult(await (await DocumentResolver.ReadLocal).GetPaths(options, cancellationToken), cancellationToken);
 
     [HttpGet("api/has-meta/{path}")]
     public async Task<ActionResult> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken) =>
         new JsonResult(await (await DocumentResolver.ReadLocal).HasMeta(node, cancellationToken));
 
-    [HttpGet("api/get-count-of-paths/{path}")]
-    public async Task<ActionResult> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken) =>
-        new JsonResult(await (await DocumentResolver.ReadLocal).GetCountOfPaths(options, cancellationToken));
+    // [HttpGet("api/get-count-of-paths/{path}")]
+    // public async Task<ActionResult> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken) =>
+    //     new JsonResult(await (await DocumentResolver.ReadLocal).GetCountOfPaths(options, cancellationToken));
 
     [HttpGet("api/get-fingerprints/{path}")]
     public async Task<ActionResult> FetchFingerprintsForNode(string path, CancellationToken cancellationToken)

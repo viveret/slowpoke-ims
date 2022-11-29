@@ -93,7 +93,7 @@ public class GenericReadWriteDocumentResolver : GenericReadOnlyDocumentResolver,
     // todo: fix this, if client calls with using() then the stream will be closed prematurely
     public Task<Stream> OpenWrite(WritableDocument doc, CancellationToken cancellationToken) => inMemoryGenericDocumentRepository.OpenWriteInMemory(doc.Path, cancellationToken);
 
-    public Task<Stream> OpenWriteMeta(IWritableDocumentMeta doc, CancellationToken cancellationToken) => inMemoryGenericDocumentRepository.OpenWriteInMemory(doc.Path.ConvertToAbsolutePath().ConvertToMetaPath(), cancellationToken);
+    public Task<Stream> OpenWriteMeta(IWritableDocumentMeta doc, CancellationToken cancellationToken) => inMemoryGenericDocumentRepository.OpenWriteInMemory(doc.MetaPath, cancellationToken);
 
     private Task GetMetaOrThrowIfNotWritable(IReadOnlyDocument doc, Func<IWritableDocumentMeta, Task> action)
     {

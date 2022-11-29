@@ -16,11 +16,13 @@ public class StubReadOnlyDocumentMeta : IReadOnlyDocumentMeta
     public StubReadOnlyDocumentMeta(Config config, INodePath path)
     {
         this.config = config;
-        Path = path ?? throw new ArgumentNullException(nameof(path));
+        DocOrFolderPath = path ?? throw new ArgumentNullException(nameof(path));
+        MetaPath = path.ConvertToMetaPath();
         MetaJson = new JsonObject();
     }
 
-    public INodePath Path { get; private set; }
+    public INodePath DocOrFolderPath { get; private set; }
+    public INodePath MetaPath { get; private set; }
 
     public string Title { get => MetaJson.TryGetPropertyValue(nameof(Title), out var v) && v != null ? v.GetValue<string>() : string.Empty; }
     public Task<string> ContentType { get => Task.FromResult(string.Empty); }
@@ -53,7 +55,7 @@ public class StubReadOnlyDocumentMeta : IReadOnlyDocumentMeta
 
     public DateTime LastMetaUpdate => DateTime.MinValue;
 
-    public Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyDocument>(new StubReadOnlyDocument(true, Path, config));
+    public Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyDocument>(new StubReadOnlyDocument(true, DocOrFolderPath, config));
 
     public string ComputeMetaHash() => string.Empty;
 

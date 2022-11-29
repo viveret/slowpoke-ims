@@ -4,7 +4,8 @@ namespace slowpoke.core.Models.Node.Docs;
 
 public interface IReadOnlyDocumentMeta
 {
-    INodePath Path { get; }
+    INodePath DocOrFolderPath { get; }
+    INodePath MetaPath { get; }
     Task<bool> MetaExists { get; }
     bool Favorited { get; }
     bool SyncEnabled { get; }

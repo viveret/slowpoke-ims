@@ -18,16 +18,33 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
     public ReadOnlyDocumentMeta(IReadOnlyDocumentResolver docResolver, INodePath path)
     {
         this.documentResolver = docResolver ?? throw new ArgumentNullException(nameof(docResolver));
-        Path = path ?? throw new ArgumentNullException(nameof(path));
-        var absPath = path.ConvertToAbsolutePath();
+
+        var absPath = (path ?? throw new ArgumentNullException(nameof(path))).ConvertToAbsolutePath();
 
         if (string.IsNullOrWhiteSpace(absPath.PathValue))
         {
             throw new ArgumentException($"Invalid path value '{path.PathValue}'", nameof(path));
         }
 
-        FileInfo = new FileInfo(absPath.PathValue);
-        MetaFileInfo = new FileInfo(absPath.ConvertToMetaPath().PathValue);
+        var isMetaPath = absPath.IsMeta;
+        INodePath docOrFolderPath, metaPath;
+        
+        if (isMetaPath)
+        {
+            docOrFolderPath = absPath.RemoveMetaExtension();
+            metaPath = absPath;
+        }
+        else
+        {
+            docOrFolderPath = absPath;
+            metaPath = absPath.ConvertToMetaPath();
+        }
+
+        DocOrFolderPath = docOrFolderPath;
+        MetaPath = metaPath;
+
+        FileInfo = new FileInfo(docOrFolderPath.PathValue);
+        MetaFileInfo = new FileInfo(metaPath.PathValue);
         if (MetaFileInfo.Exists)
         {
             using var reader = new StreamReader(MetaFileInfo.OpenRead(), System.Text.Encoding.UTF8);
@@ -40,7 +57,8 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
         }
     }
 
-    public INodePath Path { get; private set; }
+    public INodePath DocOrFolderPath { get; private set; }
+    public INodePath MetaPath { get; private set; }
 
     public string Title { get => MetaJson.TryGetPropertyValue(nameof(Title), out var v) && v != null ? v.GetValue<string>() : string.Empty; }
     public Task<string> ContentType { get => documentResolver.GetContentTypeFromExtension(FileInfo.FullName.GetFullExtension()); }
@@ -73,7 +91,7 @@ public class ReadOnlyDocumentMeta : IReadOnlyDocumentMeta
 
     public DateTime LastMetaUpdate => MetaFileInfo.LastWriteTimeUtc;
 
-    public async Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken) => (IReadOnlyDocument) (await documentResolver.GetNodeAtPath(Path, cancellationToken));
+    public async Task<IReadOnlyDocument> GetDocument(CancellationToken cancellationToken) => (IReadOnlyDocument) (await documentResolver.GetNodeAtPath(DocOrFolderPath, cancellationToken));
 
     public string ComputeMetaHash()
     {

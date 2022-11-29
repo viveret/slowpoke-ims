@@ -13,12 +13,12 @@
             isPDF = true;
             break;
             case "text":
-            allText = await Model.Doc.ReadAllText(Encoding.Unicode, numLines: 5);
+            allText = await Model.Doc.ReadAllText(Encoding.Unicode);
             break;
             default:
             if (contentType.StartsWith("text/"))
             {
-                allText = await Model.Doc.ReadAllText(Encoding.Unicode, numLines: 5);
+                allText = await Model.Doc.ReadAllText(Encoding.Unicode);
             }
             else if (contentType.StartsWith("image/"))
             {

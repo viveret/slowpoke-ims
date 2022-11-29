@@ -39,9 +39,9 @@ public static class DocPathExtensions
         return ValidPathRegex.IsMatch(path);
     }
 
-    public static bool HasValue(this INodePath path) => !string.IsNullOrWhiteSpace(path?.PathValue);
+    public static bool HasValue(this INodePath? path) => !string.IsNullOrWhiteSpace(path?.PathValue);
 
-    public static bool HasValue(this string str) => !string.IsNullOrWhiteSpace(str);
+    public static bool HasValue(this string? str) => !string.IsNullOrWhiteSpace(str);
 
     public static string GetFullExtension(this string str)
     {

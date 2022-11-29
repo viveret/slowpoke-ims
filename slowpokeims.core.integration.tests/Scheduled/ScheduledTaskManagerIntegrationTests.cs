@@ -17,6 +17,7 @@ using SlowPokeIMS.Tests.Core.Services;
 using slowpoke.core.Services.Http;
 using SlowPokeIMS.Integration.Tests.Core;
 using slowpoke.core.Services.Identity;
+using SlowPokeIMS.Core.Services.Node.Docs.PathRules;
 
 namespace SlowPokeIMS.Core.Tests.Services.Scheduled;
 
@@ -43,7 +44,8 @@ public class ScheduledTaskManagerIntegrationTests: IClassFixture<WebServerFixtur
         var hostProvider = new TestSlowPokeHostProvider(cfg, fixture, authService);
         var broadcastProviderResolver = BroadcastProviderResolver.CreateForTesting(cfg, hostProvider);
         var readRemotes = new List<IReadOnlyDocumentResolver>() { };
-        var readLocal = new ReadOnlyLocalDocumentResolver(cfg, broadcastProviderResolver);
+        var pathRuleService = GenericPathRuleService.Empty(cfg);
+        var readLocal = new ReadOnlyLocalDocumentResolver(cfg, broadcastProviderResolver, pathRuleService);
         var resolver = new TestDocumentProviderResolver(readLocal, null, null, readRemotes, null, null, null);
         readRemotes.Add(new HttpReadOnlyRemoteDocumentResolver(await fixture.GetClient1(), cfg, resolver));
         var mgr = new ScheduledTaskManager(new ScheduledTaskContextStorage(), new IScheduledTask[] { new ScanLocalAndPullChangesScheduledTask(cfg, syncStateManager, null, resolver) });

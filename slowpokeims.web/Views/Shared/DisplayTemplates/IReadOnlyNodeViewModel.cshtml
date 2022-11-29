@@ -1,9 +1,21 @@
 @using slowpoke.core.Models.Node.Docs
 @model IReadOnlyNodeViewModel
-@if (Model.Model is IReadOnlyDocument doc) {
-    @Html.DisplayFor(m => doc)
-}
-else
-{
-    @Html.DisplayFor(m => m.Folder)
-}
+<div class="s-card mt96">
+    <div class="d-grid grid__12 g8">
+        @if (Model.Model is IReadOnlyDocument doc) {
+            var classSize = (ViewData["classSize"] as string) ?? "";
+            ViewData["badgeClass"] = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
+            ViewData["TitleSize"] = "Large";
+            ViewData["TitleNodeType"] = "Document";
+
+            <partial name="NodeHeader" />
+            <partial name="NodeActionsDropdown" />
+            <partial name="DocumentContent" />
+            <partial name="NodeMeta" />
+        }
+        else
+        {
+            @Html.DisplayFor(m => m.Folder)
+        }
+    </div>
+</div>

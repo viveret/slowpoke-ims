@@ -35,10 +35,6 @@ public interface IReadOnlyDocumentResolver
     
     Task<IEnumerable<IReadOnlyNode>> GetNodes(QueryDocumentOptions options, CancellationToken cancellationToken);
 
-    Task<IEnumerable<INodePath>> GetPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
-    
-    Task<int> GetCountOfPaths(QueryDocumentOptions options, CancellationToken cancellationToken);
-
     Task<string> GetExtensionFromContentType(string contentType);
     
     Task<string> GetContentTypeFromExtension(string extension);

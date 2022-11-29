@@ -48,6 +48,7 @@ public abstract class DocPathBase : INodePath
         return this.PathValue;
     }
 
+    // todo: need to fix this to undo. Maybe a new function called UndoConvertToMetaPath() or ConvertToOriginalPath()
     public INodePath ConvertToMetaPath()
     {
         if (Path.HasExtension(PathValue))

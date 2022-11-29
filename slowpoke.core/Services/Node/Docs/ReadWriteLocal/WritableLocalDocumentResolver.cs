@@ -4,6 +4,7 @@ using slowpoke.core.Models.Node;
 using slowpoke.core.Models.Node.Docs;
 using slowpoke.core.Models.Node.Docs.ReadWriteLocal;
 using slowpoke.core.Services.Broadcast;
+using SlowPokeIMS.Core.Services.Node.Docs.PathRules;
 
 namespace slowpoke.core.Services.Node.Docs;
 
@@ -22,7 +23,10 @@ public class WritableLocalDocumentResolver : ReadOnlyLocalDocumentResolver, IWri
         return perms;
     }
 
-    public WritableLocalDocumentResolver(Config config, IBroadcastProviderResolver broadcastProviderResolver) : base(config, broadcastProviderResolver)
+    public WritableLocalDocumentResolver(
+        Config config,
+        IBroadcastProviderResolver broadcastProviderResolver,
+        IPathRuleService pathRuleService) : base(config, broadcastProviderResolver, pathRuleService)
     {
     }
 
@@ -41,7 +45,7 @@ public class WritableLocalDocumentResolver : ReadOnlyLocalDocumentResolver, IWri
         var metaReadonly = await base.GetMeta(node, cancellationToken);
         if ((await Permissions).CanWrite)
         {
-            return new WritableDocumentMeta(this, metaReadonly.Path);
+            return new WritableDocumentMeta(this, metaReadonly.MetaPath);
         }
         return metaReadonly;
     }
@@ -80,7 +84,7 @@ public class WritableLocalDocumentResolver : ReadOnlyLocalDocumentResolver, IWri
     // todo: fix this, if client calls with using() then the stream will be closed prematurely
     public Task<Stream> OpenWrite(WritableDocument doc, CancellationToken cancellationToken) => OpenWriteLocal(doc.Path, cancellationToken);
 
-    public Task<Stream> OpenWriteMeta(IWritableDocumentMeta doc, CancellationToken cancellationToken) => OpenWriteLocal(doc.Path.ConvertToAbsolutePath().ConvertToMetaPath(), cancellationToken);
+    public Task<Stream> OpenWriteMeta(IWritableDocumentMeta doc, CancellationToken cancellationToken) => OpenWriteLocal(doc.MetaPath, cancellationToken);
 
     private static Task<Stream> OpenWriteLocal(INodePath path, CancellationToken cancellationToken)
     {

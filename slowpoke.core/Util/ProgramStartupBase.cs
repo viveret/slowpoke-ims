@@ -22,6 +22,7 @@ using slowpoke.core.Services.Node.Docs;
 using slowpoke.core.Services.Scheduled;
 using slowpoke.core.Services.Scheduled.Tasks;
 using SlowPokeIMS.Core.Services;
+using SlowPokeIMS.Core.Services.Node.Docs.PathRules;
 
 namespace SlowPokeIMS.Core.Util;
 
@@ -49,6 +50,9 @@ public abstract class ProgramStartupBase
         AddContextAndEnvProviders(services);
         
         AddConfig(services);
+
+        AddPathRules(services);
+        AddPathRuleService(services);
 
         AddAuthIdentityService(services);
         services.AddTransient<IIpAddressHistoryService, IpAddressHistoryService>();
@@ -85,6 +89,23 @@ public abstract class ProgramStartupBase
         
         services.AddHttpContextAccessor();
         services.AddSingleton<IAssemblyAccessor, AssemblyAccessor>();
+    }
+
+    protected virtual void AddPathRuleService(IServiceCollection services)
+    {
+        services.AddTransient<IPathRuleService, GenericPathRuleService>();
+    }
+
+    protected virtual void AddPathRules(IServiceCollection services)
+    {
+        // services.AddTransient<IPathRule, AlwaysApplicablePathRule>();
+        services.AddTransient<IPathRule, IsNotOsPathsRule>();
+        services.AddTransient<IPathRule, IncludeHiddenPathsRule>();
+        services.AddTransient<IPathCategoryRule, IncludeCategoryPathsRule>();
+        services.AddTransient<IPathCategoryRule, ExcludeCategoryPathsRule>();
+        services.AddTransient<IPathRule, ContentTypePathsRule>();
+        services.AddTransient<INodeMetaPathRule, SyncEnabledPathsRule>();
+        services.AddTransient<INodeMetaPathRule, IsInFavoritesPathsRule>();
     }
 
     protected virtual void AddAuthIdentityService(IServiceCollection services)

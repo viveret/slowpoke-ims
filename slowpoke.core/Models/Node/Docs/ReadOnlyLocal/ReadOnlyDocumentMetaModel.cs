@@ -15,7 +15,8 @@ public class ReadOnlyDocumentMetaModel : IReadOnlyDocumentMeta
 
     protected ReadOnlyDocumentMetaModel(IReadOnlyDocumentMeta other)
     {
-        Path = new NodePathModel(other.Path);
+        DocOrFolderPath = new NodePathModel(other.DocOrFolderPath);
+        MetaPath = new NodePathModel(other.MetaPath);
         Title = other.Title;
         CreationDate = other.CreationDate;
         LastUpdate = other.LastUpdate;
@@ -30,7 +31,8 @@ public class ReadOnlyDocumentMetaModel : IReadOnlyDocumentMeta
         DocumentHashFunction = other.DocumentHashFunction;
     }
 
-    public INodePath Path { get; set; } = new NodePathModel();
+    public INodePath DocOrFolderPath { get; set; } = new NodePathModel();
+    public INodePath MetaPath { get; set; } = new NodePathModel();
 
     public string Title { get; set; }
 

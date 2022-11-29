@@ -3,7 +3,7 @@
     var classSize = (ViewData["classSize"] as string) ?? "";
     ViewData["badgeClass"] = string.IsNullOrEmpty(classSize) ? "s-badge" : $"s-badge s-badge{classSize}";
     var props = Model.GetType().GetProperties().Select(p => p.Name).ToArray();
-    var propsToIgnore = new string[] { nameof(Model.MetaJson), nameof(Model.Title), nameof(Model.Path) };
+    var propsToIgnore = new string[] { nameof(Model.MetaJson), nameof(Model.Title), nameof(Model.DocOrFolderPath), nameof(Model.MetaPath) };
 }
 @if (await Model.MetaExists)
 {

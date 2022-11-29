@@ -12,6 +12,8 @@ using SlowPokeIMS.Integration.Tests.Core;
 using SlowPokeIMS.Tests.Core.Services;
 using System.Collections.Generic;
 using slowpoke.core.Services.Identity;
+using SlowPokeIMS.Core.Services.Node.Docs.PathRules;
+using System.Linq;
 
 namespace SlowPokeIMS.Core.Tests.Services.Scheduled.Tasks;
 
@@ -33,8 +35,9 @@ public class ScanLocalAndPullChangesScheduledTaskIntegrationTests: IClassFixture
         var broadcastProviderResolver = BroadcastProviderResolver.CreateForTesting(cfg, hostProvider);
 
         // todo: fix this, should not be local, should be test
-        var readLocal = new ReadOnlyLocalDocumentResolver(cfg, broadcastProviderResolver) {};
-        var writeLocal = new WritableLocalDocumentResolver(cfg, broadcastProviderResolver) {};
+        var pathRuleService = GenericPathRuleService.Empty(cfg);
+        var readLocal = new ReadOnlyLocalDocumentResolver(cfg, broadcastProviderResolver, pathRuleService) {};
+        var writeLocal = new WritableLocalDocumentResolver(cfg, broadcastProviderResolver, pathRuleService) {};
 
         var readOnlyLocalDriveProviders = new IReadOnlyDocumentResolver[] {};
         var readRemotes = new List<IReadOnlyDocumentResolver>();
