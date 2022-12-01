@@ -2,14 +2,15 @@
 @using System.Linq
 @model HostsViewModel
 @{
-
+    ViewData["Title"] = "Hosts";
 }
-<h1>@ViewData["Title"]</h1>
 <div class="pt96">
     <div>
-        <a asp-action="HostsSearch" asp-controller="System">Search for hosts</a>
-        <a asp-action="HostsAddOrPreview" asp-controller="System">Add or preview host</a>
+        <a class="s-btn s-btn__outlined" asp-action="HostsSearch" asp-controller="System">Search for hosts</a>
+        <a class="s-btn s-btn__outlined" asp-action="HostsAddOrPreview" asp-controller="System">Add or preview host</a>
+        <a class="s-btn s-btn__outlined" asp-action="HostsCertificate" asp-controller="System">Preview host certificate</a>
     </div>
+    <h1>@ViewData["Title"]</h1>
     @foreach (var group in new KeyValuePair<string, IEnumerable>[] { new ("All", Model.AllHosts), new ("Trusted", Model.TrustedHosts), new ("Known but Untrusted", Model.KnownButUntrustedHosts) })
     {
         var ct = 0;

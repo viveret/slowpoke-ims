@@ -16,6 +16,7 @@ using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
 using slowpoke.core.Services.Scheduled;
 using slowpoke.core.Services.Scheduled.Tasks;
+using slowpoke.core.Util;
 using SlowPokeIMS.Core.Services.Broadcast;
 using SlowPokeIMS.Core.Services.Node.Docs.ReadOnly;
 using SlowPokeIMS.Web.Controllers.Attributes;
@@ -224,15 +225,30 @@ public class SystemController : Controller
         return View();
     }
 
-    [HttpPost("system/hosts/add")]
+    [HttpGet("system/hosts/add")]
     public async Task<ActionResult> HostsAdd(string url, CancellationToken cancellationToken)
     {
+        url = Uri.UnescapeDataString(url);
         if (Uri.TryCreate(url, new UriCreationOptions(), out var uri))
         {
-            await slowPokeHostProvider.AddNewTrustedHosts(new ISlowPokeHost[] { new SlowPokeHostModel { } }, cancellationToken);
+            // new ISlowPokeHost[] { new SlowPokeHostModel { Endpoint = uri } }
+            var hosts = new ISlowPokeHost[] { await slowPokeHostProvider.GetHost(uri, cancellationToken) };
+            await slowPokeHostProvider.AddNewTrustedHosts(hosts, cancellationToken);
             return RedirectToAction(nameof(HostDetails), new { endpoint = uri });
         }
         
+        return View();
+    }
+
+    [HttpGet("system/hosts/certificate")]
+    public async Task<ActionResult> HostsCertificate(string url, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            url = Uri.UnescapeDataString(url);
+            ViewData[nameof(url)] = url;
+            return View(await CertificateHelper.GetCertificate(url));
+        }
         return View();
     }
 

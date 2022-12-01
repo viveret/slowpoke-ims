@@ -1,0 +1,21 @@
+@using System.Security.Cryptography.X509Certificates
+@model X509Certificate2
+@{
+    ViewData["Title"] = $"Host Certificate for {ViewData["url"]}";
+}
+<div class="pt96">
+    <h1>@ViewData["Title"]</h1>
+    @using (Html.BeginForm("HostsCertificate", "System", null, FormMethod.Get, null, null))
+    {
+        <label class="s-label" for="url">Url</label>
+        <input type="url" class="s-input" name="url" value="@ViewData["url"]" required placeholder="https://example.com" />
+
+        <button type="submit" class="s-btn s-btn__primary">Submit</button>
+    }
+    @if (Model != null)
+    {
+        <div class="s-card">
+            @Html.DisplayFor(m => m)
+        </div>
+    }
+</div>
