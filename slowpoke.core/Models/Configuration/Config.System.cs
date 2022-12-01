@@ -1,3 +1,4 @@
+using System.Reflection;
 using slowpoke.core.Models.Configuration.Attributes;
 
 namespace slowpoke.core.Models.Configuration;
@@ -17,10 +18,23 @@ public partial class Config
         [Default("SlowPoke IMS")]
         public string Title { get; set; } = string.Empty;
 
-        string SoftwareVersion { get; set; } = string.Empty;
+        public string SoftwareVersion => Assembly.GetExecutingAssembly().ImageRuntimeVersion;
         
-        string SoftwareVersionDate { get; set; } = string.Empty;
+        public DateTime SoftwareVersionDate
+        {
+            get
+            {
+                var path = Assembly.GetExecutingAssembly().Location!;
+                var creationTime = File.GetCreationTimeUtc(path);
+                var lastWriteTime = File.GetLastWriteTimeUtc(path);
+                return new DateTime(Math.Max(creationTime.Ticks, lastWriteTime.Ticks));
+            }
+        }
         
-        string UserRunningAs { get; set; } = string.Empty;
+        public Version EnvVersion => Environment.Version;
+        
+        public string UserRunningAs => Environment.UserName;
+        
+        public string MachineRunningAs => Environment.MachineName;
     }
 }

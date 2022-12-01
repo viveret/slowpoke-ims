@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net.Http.Headers;
 using slowpoke.core.Client;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Identity;
@@ -80,6 +81,16 @@ public class FakeSlowPokeClient : ISlowPokeClient
     }
 
     public Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, MediaTypeHeaderValue?, Task<T?>> responseHandler, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<T?> QueryJson<T>(string path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

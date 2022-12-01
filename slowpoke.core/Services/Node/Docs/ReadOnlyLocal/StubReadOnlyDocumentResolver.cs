@@ -28,6 +28,8 @@ public class StubReadOnlyDocumentResolver : IReadOnlyDocumentResolver
 
     public Task<NodePermissionCategories<bool>> Permissions => Task.FromResult(new NodePermissionCategories<bool>());
 
+    public string ConstContentType { get; set; }
+
     public Task<IEnumerable<INodeFingerprint>> FetchFingerprintsForNode(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         return Task.FromResult(Enumerable.Empty<INodeFingerprint>());
@@ -35,7 +37,7 @@ public class StubReadOnlyDocumentResolver : IReadOnlyDocumentResolver
 
     public Task<string> GetContentTypeFromExtension(string extension)
     {
-        return Task.FromResult(string.Empty);
+        return Task.FromResult(ConstContentType ?? string.Empty);
     }
 
     public Task<int> GetCountOfNodes(CancellationToken cancellationToken)

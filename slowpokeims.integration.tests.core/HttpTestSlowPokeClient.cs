@@ -19,16 +19,16 @@ public class HttpTestSlowPokeClient : HttpSlowPokeClient, ITestSlowPokeClient
 
     public Task CreateFolder(string folderPath, bool syncEnabled)
     {
-        return Query<bool>($"test/create-folder/{Uri.EscapeDataString(folderPath)}/{syncEnabled}", null, str => Task.FromResult(bool.Parse(str)), CancellationToken.None);
+        return Query<bool>($"test/create-folder/{Uri.EscapeDataString(folderPath)}/{syncEnabled}", null, (str, _) => Task.FromResult(bool.Parse(str)), CancellationToken.None);
     }
 
     public Task CreateFile(string filePath, string content, bool syncEnabled)
     {
-        return Query<bool>($"test/create-file/{Uri.EscapeDataString(filePath)}/{syncEnabled}", null, str => Task.FromResult(bool.Parse(str)), CancellationToken.None);
+        return Query<bool>($"test/create-file/{Uri.EscapeDataString(filePath)}/{syncEnabled}", null, (str, _) => Task.FromResult(bool.Parse(str)), CancellationToken.None);
     }
 
     public Task EnsureNoFilesOrFolders()
     {
-        return Query<bool>($"test/EnsureNoFilesOrFolders", null, str => Task.FromResult(bool.TryParse(str, out var b) ? b : throw new Exception(str)), CancellationToken.None);
+        return Query<bool>($"test/EnsureNoFilesOrFolders", null, (str, _) => Task.FromResult(bool.TryParse(str, out var b) ? b : throw new Exception(str)), CancellationToken.None);
     }
 }

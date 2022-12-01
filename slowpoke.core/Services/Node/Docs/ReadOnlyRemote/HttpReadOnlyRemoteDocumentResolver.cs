@@ -104,9 +104,16 @@ public class HttpReadOnlyRemoteDocumentResolver: AbstractReadOnlyRemoteDocumentR
     public override Task<int> GetCountOfNodes(QueryDocumentOptions options, CancellationToken cancellationToken) =>
         slowPokeClient.SearchCount("api/count-of-nodes", options, cancellationToken);
 
-    public override Task<IReadOnlyNode> GetNodeAtPath(INodePath path, CancellationToken cancellationToken) =>
-        slowPokeClient.Query<IReadOnlyNode>($"api/get-document/{Uri.EscapeDataString(path.PathValue)}",
-            request => request.Headers.Add("Accept", "application/json"), async json => await ParseDocument(json), cancellationToken);
+    public override async Task<IReadOnlyNode> GetNodeAtPath(INodePath path, CancellationToken cancellationToken)
+    {
+        var model = await slowPokeClient.QueryJson<JsonReadOnlyDocument>($"api/get-document/{Uri.EscapeDataString(path.PathValue)}", cancellationToken);
+        if (model.MetaSynch.LastUpdate == null)
+        {
+            throw new Exception($"MetaSynch was null");
+        }
+        var doc = await RemoteReadOnlyDocument.CreateDoc(model, this);
+        return doc;
+    }
 
     public override Task<IEnumerable<IReadOnlyDocument>> GetDocuments(QueryDocumentOptions options, CancellationToken cancellationToken) =>
         slowPokeClient.Search("api/get-documents", options, null, responseHandler: json => ParseDocuments(json), cancellationToken);

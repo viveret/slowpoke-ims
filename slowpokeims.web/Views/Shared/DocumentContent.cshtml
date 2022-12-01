@@ -4,7 +4,8 @@
     string allText = null;
     bool isPDF = false;
     bool isImage = false;
-    var contentType = await meta.ContentType;
+    bool isHtml = false;
+    var contentType = await Model.Doc.GetContentType();
     if (!string.IsNullOrWhiteSpace(contentType))
     {
         switch (contentType)
@@ -13,12 +14,17 @@
             isPDF = true;
             break;
             case "text":
-            allText = await Model.Doc.ReadAllText(Encoding.Unicode);
+            allText = await Model.Doc.ReadAllText(Encoding.Unicode, Config.ContentPreview.NumLines);
+            break;
+            case "text/html":
+            case "text/html; charset=utf-8":
+            isHtml = true;
+            allText = await Model.Doc.ReadAllText(Encoding.UTF8, Config.ContentPreview.NumLines);
             break;
             default:
             if (contentType.StartsWith("text/"))
             {
-                allText = await Model.Doc.ReadAllText(Encoding.Unicode);
+                allText = await Model.Doc.ReadAllText(Encoding.Unicode, Config.ContentPreview.NumLines);
             }
             else if (contentType.StartsWith("image/"))
             {
@@ -45,8 +51,12 @@
             <span class="fs-italic">unknown content type or extension</span>
         }
     }
+    else if (isHtml)
+    {
+        <iframe class="w100" sandbox srcdoc="@allText"></iframe>
+    }
     else
     {
-        <span class="ws-pre-line">@allText</span>
+        <span class="w100" class="ws-pre-line">@allText</span>
     }
 </div>

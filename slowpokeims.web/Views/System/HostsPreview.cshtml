@@ -1,0 +1,49 @@
+@model IReadOnlyNodeViewModel
+@{
+    ViewData["Title"] = "Preview";
+}
+<div class="pt96">
+    <h1>@ViewData["Title"]</h1>
+    @using (Html.BeginForm("HostsPreview"))
+    {
+        <label class="s-label" for="url">Url</label>
+        <input type="url" class="s-input" name="url" value="@ViewData["url"]" required placeholder="https://example.com" />
+
+        <label class="s-label" for="acceptType">Accept Type</label>
+        <input type="text" class="s-input" name="acceptType" value="@ViewData["acceptType"]" placeholder="application/json" />
+
+        <label class="s-label">Content Type</label>
+        <input type="text" class="s-input" value="@ViewData["contentType"]" disabled />
+
+        <input type="submit" class="s-btn s-btn__primary" value="Preview" />
+    }
+    <h1 class="mt32">Response</h1>
+    <nav aria-label="">
+        <div class="s-navigation" role="tablist" data-controller="s-navigation-tablist">
+            <button type="button"
+                    role="tab"
+                    id="tab-question"
+                    aria-selected="true"
+                    aria-controls="panel-raw-text-response"
+                    class="s-navigation--item is-selected">Raw Text Response</button>
+            <button type="button"
+                    role="tab"
+                    id="tab-answers"
+                    aria-selected="false"
+                    aria-controls="panel-preview-response"
+                    tabindex="-1"
+                    class="s-navigation--item">Preview Response</button>
+        </div>
+    </nav>
+    <div id="panel-raw-text-response">
+        <textarea class="w100">
+            @ViewData["response"]
+        </textarea>
+    </div>
+    <div id="panel-preview-response" class="d-none">
+        @if (Model != null)
+        {
+            <partial name="DocumentContent" />
+        }
+    </div>
+</div>

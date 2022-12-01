@@ -139,6 +139,7 @@ public abstract class ProgramStartupBase
     {
         var assembly = Assembly.GetExecutingAssembly();
         var libraryPath = System.IO.Path.GetFullPath(assembly.GetName().Name!);
+        var folderPath = Path.GetDirectoryName(libraryPath);
         if (Directory.Exists(libraryPath))
         {
             options.FileProviders.Add(new PhysicalFileProvider(libraryPath));
@@ -178,6 +179,7 @@ public abstract class ProgramStartupBase
         services.AddTransient<Config.PathsConfig>();
         services.AddTransient<Config.StyleConfig>();
         services.AddTransient<Config.P2PConfig>();
+        services.AddTransient<Config.ContentPreviewConfig>();
         services.AddTransient<Config>();
     }
 

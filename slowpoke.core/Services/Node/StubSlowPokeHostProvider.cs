@@ -20,6 +20,8 @@ public class StubSlowPokeHostProvider : ISlowPokeHostProvider
 
     public Task AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken) => Task.CompletedTask;
 
+    public Task AddNewTrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken) => Task.CompletedTask;
+
     public Task<ISlowPokeHost> GetHost(Uri location, CancellationToken cancellationToken)
     {
         return Task.FromResult<ISlowPokeHost>(new SlowPokeHostModel());

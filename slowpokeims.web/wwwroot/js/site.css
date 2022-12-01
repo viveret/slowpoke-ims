@@ -21183,4 +21183,22 @@ body {
 .display-field {
   padding-left: 8px;
 }
+.site-footer {
+  background-color: var(--theme-topbar-background-color);
+  background-image: none;
+  border-top: var(--theme-topbar-accent-border);
+}
+.site-footer .site-footer--container,
+.site-footer .site-footer--extra {
+  max-width: 1264px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--su32) var(--su12) var(--su12) var(--su12);
+  display: flex;
+  flex-flow: row wrap;
+}
+.site-footer .site-footer--extra {
+  padding: var(--su32) var(--su12);
+  border-top: 1px solid var(--theme-footer-divider-color);
+}
 

@@ -8,6 +8,7 @@
 <div class="pt96">
     <div>
         <a asp-action="HostsSearch" asp-controller="System">Search for hosts</a>
+        <a asp-action="HostsAddOrPreview" asp-controller="System">Add or preview host</a>
     </div>
     @foreach (var group in new KeyValuePair<string, IEnumerable>[] { new ("All", Model.AllHosts), new ("Trusted", Model.TrustedHosts), new ("Known but Untrusted", Model.KnownButUntrustedHosts) })
     {

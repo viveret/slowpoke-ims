@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Identity;
 using slowpoke.core.Models.Node;
@@ -18,7 +19,8 @@ public interface ISlowPokeClient : IDisposable, IBroadcastProvider
     Task<bool> Ping(CancellationToken token);
     Task<int> SearchCount(string path, QueryDocumentOptions? options, CancellationToken cancellationToken);
     Task<T?> Search<T>(string path, object json, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken);
-    Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken);
+    Task<T?> QueryJson<T>(string path, CancellationToken cancellationToken);
+    Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, MediaTypeHeaderValue?, Task<T?>> responseHandler, CancellationToken cancellationToken);
     Task<T?> GraphQLQuery<T>(string query, CancellationToken cancellationToken);
     Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken);
     Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken);

@@ -27,6 +27,11 @@ public class TestSlowPokeHostProvider : SlowPokeHostProviderBase
         throw new NotImplementedException();
     }
 
+    public override Task AddNewTrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public override Task<ISlowPokeHost> GetHost(Uri location, CancellationToken cancellationToken)
     {
         return Task.FromResult<ISlowPokeHost>(new SlowPokeHostModel() { Endpoint = location });

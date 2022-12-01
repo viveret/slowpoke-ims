@@ -49,7 +49,12 @@ public class HttpSlowPokeClient : ISlowPokeClient
         return client;
     }
 
-    public async Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken)
+    public Task<T?> QueryJson<T>(string path, CancellationToken cancellationToken)
+    {
+        return Query<T?>(path, request => request.Headers.Add("Accept", "application/json"), (json, contentType) => Task.FromResult(JsonSerializer.Deserialize<T>(json)), cancellationToken);
+    }
+
+    public async Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, MediaTypeHeaderValue?, Task<T?>> responseHandler, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
         configureRequest?.Invoke(request);
@@ -58,7 +63,7 @@ public class HttpSlowPokeClient : ISlowPokeClient
         var str = sr.ReadToEnd();
         if (response.IsSuccessStatusCode)
         {
-            return await responseHandler(str);
+            return await responseHandler(str, response.Content.Headers.ContentType);
         }
         else
         {
@@ -137,30 +142,30 @@ public class HttpSlowPokeClient : ISlowPokeClient
             request.Headers.Add("Content-Type", "application/json");
             request.Headers.Add("Accept", "application/json");
             configureRequest?.Invoke(request);
-        }, responseHandler, cancellationToken))!;
+        }, (json, contentType) => responseHandler(json), cancellationToken))!;
     }
 
     public async Task<bool> Ping(CancellationToken cancellationToken)
     {
-        return await Query<bool>("api/ping", null, str => Task.FromResult(bool.TryParse(str, out var b) && b), cancellationToken);
+        return await Query<bool>("api/ping", null, (str, contentType) => Task.FromResult(bool.TryParse(str, out var b) && b), cancellationToken);
     }
 
     public async Task<bool> HasMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(node);
-        return await Query<bool>($"api/has-meta/{Uri.EscapeDataString(node.Path.PathValue)}", null, str => Task.FromResult(bool.Parse(str)), cancellationToken);
+        return await Query<bool>($"api/has-meta/{Uri.EscapeDataString(node.Path.PathValue)}", null, (str, contentType) => Task.FromResult(bool.Parse(str)), cancellationToken);
     }
 
     public async Task<IReadOnlyDocumentMeta> GetMeta(IReadOnlyNode node, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(node);
-        return (await Query<IReadOnlyDocumentMeta>($"api/get-meta/{Uri.EscapeDataString(node.Path.PathValue)}", null, json => throw new NotImplementedException(json), cancellationToken))!;
+        return (await QueryJson<ReadOnlyDocumentMetaModel>($"api/get-meta/{Uri.EscapeDataString(node.Path.PathValue)}", cancellationToken))!;
     }
 
     public async Task<bool> NodeExistsAtPath(INodePath path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(path);
-        return await Query<bool>($"api/node-exists-at-path/{Uri.EscapeDataString(path.PathValue)}", null, str => Task.FromResult(bool.Parse(str)), cancellationToken);
+        return await Query<bool>($"api/node-exists-at-path/{Uri.EscapeDataString(path.PathValue)}", null, (str, _) => Task.FromResult(bool.Parse(str)), cancellationToken);
     }
 
     private class GraphQLResult<T>
@@ -178,7 +183,7 @@ public class HttpSlowPokeClient : ISlowPokeClient
             c.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             request.Content = c;
             request.Headers.Add("Accept", "application/json");
-        }, json => Task.FromResult(json != null ? JsonSerializer.Deserialize<GraphQLResult<T>>(json).data : default), cancellationToken);
+        }, (json, _) => Task.FromResult(json != null ? JsonSerializer.Deserialize<GraphQLResult<T>>(json).data : default), cancellationToken);
     }
 
     public async Task<bool> Sync(bool asynchronous = true, bool immediately = false)
@@ -199,25 +204,25 @@ public class HttpSlowPokeClient : ISlowPokeClient
             argsStr = "?" + argsStr;
         }
         
-        return await Query<bool>($"api/sync{argsStr}", null, str => Task.FromResult(bool.Parse(str)), CancellationToken.None);
+        return await Query<bool>($"api/sync{argsStr}", null, (str, _) => Task.FromResult(bool.Parse(str)), CancellationToken.None);
     }
 
     public async Task<bool> IsUpToDate() => await GetSyncState(CancellationToken.None) == SyncState.UpToDate;
 
     public Task<SyncState> GetSyncState(CancellationToken cancellationToken)
     {
-        return Query<SyncState>($"api/sync-state", null, str => Task.FromResult(int.TryParse(str, out var id) ? (SyncState)id : Enum.Parse<SyncState>(str)), cancellationToken);
+        return Query<SyncState>($"api/sync-state", null, (str, _) => Task.FromResult(int.TryParse(str, out var id) ? (SyncState)id : Enum.Parse<SyncState>(str)), cancellationToken);
     }
 
     public async Task<bool> AddTrusted(string hostUrl, bool testConnection, CancellationToken cancellationToken)
     {
         var path = testConnection ?  "api/add-trusted-test-connection" : "api/add-trusted";
-        return await Query<bool>($"{path}/{Uri.EscapeDataString(hostUrl)}", null, str => Task.FromResult(bool.TryParse(str, out var b) && b ? b : throw new Exception(str)), cancellationToken);
+        return await Query<bool>($"{path}/{Uri.EscapeDataString(hostUrl)}", null, (str, _) => Task.FromResult(bool.TryParse(str, out var b) && b ? b : throw new Exception(str)), cancellationToken);
     }
 
     public async Task<ISlowPokeIdentity> GetIdentity(CancellationToken cancellationToken)
     {
-        return (await Query<ISlowPokeIdentity>($"api/get-identity", null, json => Task.FromResult<ISlowPokeIdentity>(JsonSerializer.Deserialize<IdentityModel>(json)!), cancellationToken))!;
+        return (await QueryJson<IdentityModel>($"api/get-identity", cancellationToken))!;
     }
 
     public Task<ISlowPokeHost> GetDetails(CancellationToken cancellationToken)

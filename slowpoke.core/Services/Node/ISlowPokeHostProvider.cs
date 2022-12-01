@@ -26,4 +26,6 @@ public interface ISlowPokeHostProvider
     Task<SearchForLocalNetworkHostsResult> SearchForLocalNetworkHosts(ILogger logger, CancellationToken cancellationToken);
     
     Task AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken);
+
+    Task AddNewTrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken);
 }

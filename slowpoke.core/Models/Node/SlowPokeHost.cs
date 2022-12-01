@@ -40,7 +40,7 @@ public class SlowPokeHost : ISlowPokeHost
         // todo: this needs to be done async somehow, maybe pass in constructor so we know for sure this data is resolvable
         cachedInfo = new SlowPokeHostModel
         {
-            Label = (await slowPokeClient.GraphQLQuery<QueryHostModelResult>(ToInfoPropertyName(nameof(Label)), CancellationToken.None)).hostInfo?.Label ?? string.Empty,
+            Label = (await slowPokeClient.GraphQLQuery<QueryHostModelResult>(ToInfoPropertyName(nameof(Label)), CancellationToken.None))!.hostInfo?.Label ?? string.Empty,
         };
     }
 
@@ -56,7 +56,12 @@ public class SlowPokeHost : ISlowPokeHost
 
     public string RawId => slowPokeClient.Endpoint.ToString();
 
-    public Task<Config> Config => slowPokeClient.Query<Config>("api/get-config", null, json => Task.FromResult(System.Text.Json.JsonSerializer.Deserialize<Config>(json)), CancellationToken.None);
+    public Task<Config> Config => GetConfig();
+
+    private async Task<Config> GetConfig()
+    {
+        return (await slowPokeClient.QueryJson<Config>("api/get-config", CancellationToken.None))!;
+    }
 
     private class QueryHostModelResult
     {

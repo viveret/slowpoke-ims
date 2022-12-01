@@ -19,7 +19,7 @@ public class GenericReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
         IBroadcastProvider broadcastProvider,
         INodePath path): base(documentResolver, broadcastProvider, path)
     {
-        if (!this.Path.IsDocument)
+        if (!this.Path.IsDocument && !this.Path.IsUri)
             throw new ArgumentException($"path is not a document: {path}", nameof(this.Path));
     }
 
@@ -85,7 +85,7 @@ public class GenericReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
 
     public Task<string> ReadAllText(Encoding encoding, int numLines = 0)
     {
-        return Task.FromResult("");
+        return Task.FromResult(ConstContent ?? "");
     }
 
     public override Task<IEnumerable<INodeDiffBrief>> FetchChanges(CancellationToken cancellationToken)
@@ -120,7 +120,7 @@ public class GenericReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
         return await Exists ? OnUnauthorizedReturn0(() => -1) : 0L;
     }
 
-    public Task<string> GetContentType() => documentResolver.GetContentTypeFromExtension(this.Path.PathValue.GetFullExtension());
+    public Task<string> GetContentType() => ConstContentType != null ? Task.FromResult(ConstContentType) : documentResolver.GetContentTypeFromExtension(this.Path.PathValue.GetFullExtension());
 
     public override Task<NodePermissionCategories<bool>> Permissions
     {
@@ -138,4 +138,7 @@ public class GenericReadOnlyDocument : ReadOnlyNode, IReadOnlyDocument
             });
         }
     }
+
+    public string? ConstContentType { get; set; }
+    public string? ConstContent { get; set; }
 }

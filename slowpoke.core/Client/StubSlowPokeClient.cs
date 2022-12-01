@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using slowpoke.core.Models.Broadcast;
 using slowpoke.core.Models.Identity;
 using slowpoke.core.Models.Node;
@@ -74,7 +75,12 @@ public class StubSlowPokeClient : ISlowPokeClient
         throw new NotImplementedException();
     }
 
-    public Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, Task<T?>> responseHandler, CancellationToken cancellationToken)
+    public Task<T?> Query<T>(string path, Action<HttpRequestMessage>? configureRequest, Func<string, MediaTypeHeaderValue?, Task<T?>> responseHandler, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<T?> QueryJson<T>(string path, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

@@ -43,4 +43,5 @@ public abstract class SlowPokeHostProviderBase: ISlowPokeHostProvider
     public abstract Task<ISlowPokeClient> OpenClient(ISlowPokeHost host, CancellationToken cancellationToken);
     public abstract Task<SearchForLocalNetworkHostsResult> SearchForLocalNetworkHosts(ILogger logger, CancellationToken cancellationToken);    
     public abstract Task AddNewKnownButUntrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken);
+    public abstract Task AddNewTrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken);
 }

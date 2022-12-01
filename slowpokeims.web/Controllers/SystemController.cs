@@ -8,12 +8,18 @@ using slowpoke.core.Client;
 using slowpoke.core.Models.Configuration;
 using slowpoke.core.Models.Identity;
 using slowpoke.core.Models.Node;
+using slowpoke.core.Models.Node.Docs;
+using slowpoke.core.Models.Node.Docs.ReadOnlyLocal;
+using slowpoke.core.Services.Broadcast;
 using slowpoke.core.Services.Identity;
 using slowpoke.core.Services.Node;
 using slowpoke.core.Services.Node.Docs;
 using slowpoke.core.Services.Scheduled;
 using slowpoke.core.Services.Scheduled.Tasks;
+using SlowPokeIMS.Core.Services.Broadcast;
+using SlowPokeIMS.Core.Services.Node.Docs.ReadOnly;
 using SlowPokeIMS.Web.Controllers.Attributes;
+using SlowPokeIMS.Web.ViewModels;
 using SlowPokeIMS.Web.ViewModels.System;
 
 namespace SlowPokeIMS.Web.Controllers;
@@ -192,6 +198,67 @@ public class SystemController : Controller
     public async Task<ActionResult> HostsSearch(CancellationToken ct) =>
         RedirectToAction(nameof(ScheduledTaskContextDetails),
                             new { id = (await scheduledTaskManager.Execute(scheduledTaskManager.GetScheduledTask(typeof(ScanLocalNetworkForPeersScheduledTask).FullName))).Id });
+
+    [HttpGet("system/hosts/add-or-preview")]
+    public async Task<ActionResult> HostsAddOrPreview()
+    {
+        return View();
+    }
+
+    [HttpPost("system/hosts/add-or-preview")]
+    public async Task<ActionResult> HostsAddOrPreview(string url, string submit)
+    {
+        if (Uri.TryCreate(url, new UriCreationOptions(), out var uri))
+        {
+            ViewData["url"] = url;
+            switch (submit.ToLower())
+            {
+                case "add":
+                    return RedirectToAction(nameof(HostsAdd), new { url });
+                case "preview":
+                    return RedirectToAction(nameof(HostsPreview), new { url });
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(url));
+            }
+        }
+        return View();
+    }
+
+    [HttpPost("system/hosts/add")]
+    public async Task<ActionResult> HostsAdd(string url, CancellationToken cancellationToken)
+    {
+        if (Uri.TryCreate(url, new UriCreationOptions(), out var uri))
+        {
+            await slowPokeHostProvider.AddNewTrustedHosts(new ISlowPokeHost[] { new SlowPokeHostModel { } }, cancellationToken);
+            return RedirectToAction(nameof(HostDetails), new { endpoint = uri });
+        }
+        
+        return View();
+    }
+
+    [HttpGet("system/hosts/preview/{url}")]
+    public async Task<ActionResult> HostsPreview(string url, CancellationToken cancellationToken)
+    {
+        url = Uri.UnescapeDataString(url);
+        ViewData["url"] = url;
+        if (Uri.TryCreate(url, new UriCreationOptions(), out var uri))
+        {
+            var client = await slowPokeHostProvider.OpenClient(uri, cancellationToken);
+            var responseAndContentType = await client.Query<(string response, string contentType)>(uri.PathAndQuery, null, (response, contentType) => Task.FromResult((response, contentType?.ToString())), cancellationToken);
+            ViewData["response"] = responseAndContentType.response;
+            ViewData["contentType"] = responseAndContentType.contentType;
+
+            var stub = new StubReadOnlyDocumentResolver(config);
+            var stubBroadcast = new InMemoryBroadcastProvider(config, Enumerable.Empty<IBroadcastLogger>());
+            var doc = new GenericReadOnlyDocument(stub, stubBroadcast, url.AsIDocPath(config))
+            {
+                ConstContent = responseAndContentType.response,
+                ConstContentType = responseAndContentType.contentType,
+            };
+            return View(new IReadOnlyNodeViewModel(doc, null));
+        }
+        return View();
+    }
 
     [HttpGet("system/hosts/details/{endpoint}")]
     public async Task<ActionResult> HostDetails(string endpoint, CancellationToken cancellationToken)

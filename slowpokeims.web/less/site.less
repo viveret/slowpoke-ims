@@ -68,3 +68,23 @@ body {
 .display-field {
   padding-left: 8px;
 }
+
+.site-footer {
+  background-color: var(--theme-topbar-background-color);
+  background-image: none;
+  border-top: var(--theme-topbar-accent-border);
+
+  .site-footer--container, .site-footer--extra {
+    max-width: 1264px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--su16) var(--su6) var(--su6) var(--su6);
+    display: flex;
+    flex-flow: row wrap;
+  }
+
+  .site-footer--extra {
+    padding: var(--su16) var(--su6);
+    border-top: 1px solid var(--theme-topbar-divider-color);
+  }
+}

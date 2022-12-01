@@ -1,3 +1,4 @@
+using System.Net;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using slowpoke.core.Models.Configuration.Attributes;
@@ -24,6 +25,17 @@ public partial class Config
 
         [JsonIgnore, IgnoreDataMember]
         public string ServingAddress => servingInfoProvider.Ip;
+        
+        [JsonIgnore, IgnoreDataMember]
+        public string? LocalAddress
+        {
+            get
+            {
+                var localAddresses = Dns.GetHostAddresses(Dns.GetHostName());
+                var localIp = localAddresses.Where(ip => !ip.ToString().StartsWith("127.0.") && !ip.ToString().Equals("::1")).FirstOrDefault();
+                return localIp?.ToString();
+            }
+        }
         
         [Default(false)]
         public bool AutoCacheLocalNetworkHosts { get; set; }

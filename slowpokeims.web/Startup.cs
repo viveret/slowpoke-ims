@@ -4,7 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using GraphiQl;
 using SlowPokeIMS.Core.Util;
-
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+using SlowPokeIMS.Web.Controllers.Api;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace SlowPokeIMS.Web;
 
@@ -52,5 +56,26 @@ public class Startup: ProgramStartupBase
         });
         
         app.UseSession();
+    }
+        
+    // protected override void ConfigureMvcServices(IMvcBuilder mvc, bool useRazorRuntimeCompilation)
+    // {
+    //     mvc.Services.AddControllers().PartManager.ApplicationParts.Add(new AssemblyPart(typeof(ApiController).Assembly));
+    //     base.ConfigureMvcServices(mvc, useRazorRuntimeCompilation);
+    // }
+
+    protected override void ConfigureRazorRuntimeCompilation(MvcRazorRuntimeCompilationOptions options)
+    {
+        var assembly = typeof(ApiController).Assembly;
+        var projectFolder = Directory.GetParent(assembly.Location).Parent.Parent.Parent;
+        if (projectFolder.Exists)
+        {
+            options.FileProviders.Add(new PhysicalFileProvider(projectFolder.FullName));
+        }
+        else
+        {
+            options.FileProviders.Add(new EmbeddedFileProvider(assembly));
+        }
+        base.ConfigureRazorRuntimeCompilation(options);
     }
 }

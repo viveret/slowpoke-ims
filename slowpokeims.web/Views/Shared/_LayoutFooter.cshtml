@@ -1,0 +1,13 @@
+<footer class="site-footer py16 mt32">
+    <div class="site-footer--container">
+        <p class="flex--item">@Html.Raw(Config.Style.Footer) - @Config.System.Title</p>
+        <p class="flex--item">Page generated at @System.DateTime.UtcNow</p>
+    </div>
+    <div class="site-footer--extra">
+        <div class="flex--item">@Config.System.SoftwareVersion</p>
+        <div class="flex--item">@Config.System.SoftwareVersionDate</p>
+        <div class="flex--item">DotNet v.@Config.System.EnvVersion</p>
+        <div class="flex--item">@Config.System.UserRunningAs@@@(Config.P2P.LocalAddress)</p>
+        <div class="flex--item">@Config.System.MachineRunningAs</p>
+    </div>
+</footer>

@@ -24,9 +24,8 @@
         @RenderBody()
     </div>
 
-    <footer>
-        <p>@Html.Raw(Config.Style.Footer) - @Config.System.Title</p>
-    </footer>
+
+    <partial name="_LayoutFooter" />
 
     <environment include="Development">
         <script src="~/js/site.js" asp-append-version="true"></script>

@@ -146,6 +146,15 @@ public class LocalSlowPokeHostProvider: SlowPokeHostProviderBase
         return Task.CompletedTask;
     }
 
+    public override Task AddNewTrustedHosts(IEnumerable<ISlowPokeHost> hosts, CancellationToken cancellationToken)
+    {
+        var newHostEndpoints = hosts.Select(h => h?.Endpoint?.ToString()).Where(v => v != null);
+        Config.P2P.KnownButUntrustedHosts = (Config.P2P.TrustedHosts != null ? Config.P2P.TrustedHosts.Concat(newHostEndpoints) : newHostEndpoints).ToList();
+        Config.Save(cancellationToken);
+
+        return Task.CompletedTask;
+    }
+
     public override Task<ISlowPokeClient> OpenClient(ISlowPokeHost host, CancellationToken cancellationToken)
     {
         return HttpSlowPokeClient.CreateClient(host.Endpoint, Config, cancellationToken: cancellationToken);

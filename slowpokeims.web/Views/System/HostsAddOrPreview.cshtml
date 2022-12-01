@@ -1,0 +1,14 @@
+@using System.Collections
+@using System.Linq
+@{
+    ViewData["Title"] = "Add or Preview";
+}
+<div class="pt96">
+    <h1>@ViewData["Title"]</h1>
+    @using (Html.BeginForm("HostsAddOrPreview"))
+    {
+        <input type="url" class="s-input" name="url" value="@ViewData["url"]" required placeholder="https://example.com" />
+        <input type="submit" name="submit" class="s-btn s-btn__primary" value="Add" />
+        <input type="submit" name="submit" class="s-btn s-btn__primary" value="Preview" />
+    }
+</div>
